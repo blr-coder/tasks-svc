@@ -1,0 +1,6 @@
+postgres_conn_link: "postgres://db_user:db_user_pass@localhost:0000/db_name?sslmode=disable"
+
+kafka_config:
+  topic: async_arc_topic
+  partition: 0
+  address: "localhost:9092"
