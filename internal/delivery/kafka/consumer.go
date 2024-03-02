@@ -3,9 +3,9 @@ package kafka
 import (
 	"encoding/json"
 	"github.com/IBM/sarama"
+	"github.com/blr-coder/tasks-svc/internal/delivery"
 	"github.com/davecgh/go-spew/spew"
 	"log"
-	"tasks-svc/internal/delivery"
 )
 
 type Consumer struct {

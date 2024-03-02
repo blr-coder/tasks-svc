@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/IBM/sarama"
+	"github.com/blr-coder/tasks-svc/internal/config"
+	"github.com/blr-coder/tasks-svc/internal/delivery/kafka"
 	"log"
-	"tasks-svc/internal/config"
-	"tasks-svc/internal/delivery/kafka"
 )
 
 func main() {

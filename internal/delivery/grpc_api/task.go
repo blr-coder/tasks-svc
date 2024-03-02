@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
+	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/blr-coder/tasks-svc/internal/domain/usecases"
 	"github.com/google/uuid"
 	"log"
-	"tasks-svc/internal/domain/models"
-	"tasks-svc/internal/domain/usecases"
 )
 
 type TaskServiceServer struct {
