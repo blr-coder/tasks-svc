@@ -4,19 +4,19 @@ import (
 	"context"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
-	"github.com/blr-coder/tasks-svc/internal/domain/usecases"
+	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/google/uuid"
 	"log"
 )
 
 type TaskServiceServer struct {
 	taskpbv1.UnimplementedTaskServiceServer
-	taskUseCase usecases.ITaskUseCase
+	taskService services.ITaskService
 }
 
-func NewTaskServiceServer(useCase usecases.ITaskUseCase) *TaskServiceServer {
+func NewTaskServiceServer(taskService services.ITaskService) *TaskServiceServer {
 	return &TaskServiceServer{
-		taskUseCase: useCase,
+		taskService: taskService,
 	}
 }
 
@@ -33,7 +33,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		return nil, err
 	}
 
-	newId, err := s.taskUseCase.Create(ctx, &models.CreateTask{
+	newId, err := s.taskService.Create(ctx, &models.CreateTask{
 		Title:       createRequest.GetTitle(),
 		Description: createRequest.GetDescription(),
 		CustomerID:  customerID,
@@ -51,7 +51,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
 	log.Println("gat")
 
-	task, err := s.taskUseCase.Get(ctx, getRequest.GetTaskId())
+	task, err := s.taskService.Get(ctx, getRequest.GetTaskId())
 	if err != nil {
 		return nil, err
 	}

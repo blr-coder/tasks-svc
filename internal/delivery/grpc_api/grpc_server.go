@@ -7,13 +7,16 @@ import (
 
 func NewGRPCServer(
 	taskServer *TaskServiceServer,
-	//someServer *someServiceServer,
+	//someServer1 *SomeServiceServer1,
+	//someServer2 *SomeServiceServer2,
 ) *grpc.Server {
 	grpcServer := grpc.NewServer()
 
 	// register grpcServerServices
 	taskpbv1.RegisterTaskServiceServer(grpcServer, taskServer)
-	// register other services...
+	// register other services... for example:
+	//taskpbv1.RegisterSomeServiceServer1(grpcServer, someServer1)
+	//taskpbv1.RegisterSomeServiceServer2(grpcServer, someServer2)
 
 	return grpcServer
 }

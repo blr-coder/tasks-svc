@@ -16,6 +16,7 @@
 
 # Others
 bin
+configs/appconfig.yaml
 reports
 .env
 

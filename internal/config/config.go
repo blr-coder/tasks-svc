@@ -7,6 +7,7 @@ const appConfigPath = "configs/appconfig.yaml"
 type AppConfig struct {
 	PostgresConnLink string      `yaml:"postgres_conn_link" env:"POSTGRES_CONN_LINK" env-required:"true"`
 	KafkaConfig      KafkaConfig `yaml:"kafka_config"`
+	AppPort          string      `yaml:"app_port"`
 }
 
 type KafkaConfig struct {

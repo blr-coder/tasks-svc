@@ -1,10 +1,14 @@
 package main
 
 import (
-	"github.com/IBM/sarama"
+	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/config"
-	"github.com/blr-coder/tasks-svc/internal/delivery/kafka"
+	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
+	"github.com/blr-coder/tasks-svc/internal/domain/services"
+	"github.com/blr-coder/tasks-svc/internal/storage"
+	"github.com/jmoiron/sqlx"
 	"log"
+	"net"
 )
 
 func main() {
@@ -22,7 +26,8 @@ func runApp() error {
 		return err
 	}
 
-	consumer, err := sarama.NewConsumer([]string{appConfig.KafkaConfig.Address}, sarama.NewConfig())
+	// Test kafka
+	/*consumer, err := sarama.NewConsumer([]string{appConfig.KafkaConfig.Address}, sarama.NewConfig())
 	if err != nil {
 		return err
 	}
@@ -43,7 +48,24 @@ func runApp() error {
 	err = kc.Run()
 	if err != nil {
 		return err
+	}*/
+	// Test kafka
+
+	db, err := sqlx.Open("postgres", appConfig.PostgresConnLink)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	taskPsqlStorage := storage.NewTaskPsqlStorage(db)
+	taskService := services.NewTaskService(taskPsqlStorage)
+	taskGRPCServer := grpc.NewTaskServiceServer(taskService)
+
+	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", appConfig.AppPort))
+	if err != nil {
+		return err
+	}
+
+	return grpcServer.Serve(listener)
 }
