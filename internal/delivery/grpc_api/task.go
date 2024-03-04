@@ -23,6 +23,10 @@ func NewTaskServiceServer(taskService services.ITaskService) *TaskServiceServer 
 func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
 	log.Println("create")
 
+	if err := createRequest.Validate(); err != nil {
+		return nil, err
+	}
+
 	customerID, err := uuid.Parse(createRequest.GetCustomerId())
 	if err != nil {
 		return nil, err

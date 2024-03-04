@@ -1,9 +1,11 @@
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240221180331-f05a6f4403ce.1 h1:AmmAwHbvaeOIxDKG2+aTn5C36HjmFIMkrdTp49rp80Q=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240221180331-f05a6f4403ce.1/go.mod h1:tiTMKD8j6Pd/D2WzREoweufjzaJKHZg35f/VGcZ2v3I=
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/IBM/sarama v1.43.0 h1:YFFDn8mMI2QL0wOrG0J2sFoVIAFl7hS9JQi2YZsXtJc=
 github.com/IBM/sarama v1.43.0/go.mod h1:zlE6HEbC/SMQ9mhEYaF7nNLYOUyrs0obySKCckWP9BM=
-github.com/blr-coder/task-proto v0.0.0-20240302222857-b0b9f5e7e6bf h1:Qq1138uScbPU2msWqjaPz84TLmwxwzJpf8vBq+3+ao0=
-github.com/blr-coder/task-proto v0.0.0-20240302222857-b0b9f5e7e6bf/go.mod h1:UjYubN+VK1KRSJ0Tlzw8ibjmGkLcddE+RmIp1mOpqV8=
+github.com/blr-coder/task-proto v0.0.0-20240304101601-1babef7f3b75 h1:kAaDV8Inj9Erp+Pf18n+4Y0u70Op6PEm3ArzV8v9GSU=
+github.com/blr-coder/task-proto v0.0.0-20240304101601-1babef7f3b75/go.mod h1:y5MVBNdGB9xhD9DtxNZ+17LtrmiYC6fB3h1ggi8kU9E=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
