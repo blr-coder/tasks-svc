@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
-	"github.com/blr-coder/tasks-svc/internal/storage"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages"
+	"log"
 )
 
 type ITaskService interface {
@@ -14,23 +16,30 @@ type ITaskService interface {
 }
 
 type TaskService struct {
-	taskStorage storage.ITaskStorage
+	taskStorage storages.ITaskStorage
+	eventSender queues.IQueueEventSender
 }
 
-func NewTaskService(taskStorage storage.ITaskStorage) *TaskService {
+func NewTaskService(taskStorage storages.ITaskStorage, eventSender queues.IQueueEventSender) *TaskService {
 	return &TaskService{
 		taskStorage: taskStorage,
+		eventSender: eventSender,
 	}
 }
 
 func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (int64, error) {
+	log.Println("create in TaskService")
 	id, err := ts.taskStorage.Create(ctx, input)
 	if err != nil {
 		// TODO: Handle errors
 		return 0, err
 	}
 
-	// TODO: Send event like "new task created", topic - "?", partition - "?"
+	// TODO: Send events like "new task created", topic - "?", partition - "?"
+	err = ts.eventSender.Send(ctx, []byte("testK"), []byte("testV"))
+	if err != nil {
+		// TODO: Log something
+	}
 
 	return id, nil
 }

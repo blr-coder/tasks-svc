@@ -1,4 +1,4 @@
-package storage
+package psql_store
 
 import (
 	"context"
@@ -12,11 +12,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
-
-type ITaskStorage interface {
-	Create(ctx context.Context, createTask *models.CreateTask) (int64, error)
-	Get(ctx context.Context, taskID int64) (*models.Task, error)
-}
 
 type TaskPsqlStorage struct {
 	db *sqlx.DB

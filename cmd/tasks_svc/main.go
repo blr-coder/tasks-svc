@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
-	"github.com/blr-coder/tasks-svc/internal/storage"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net"
@@ -53,12 +56,30 @@ func runApp() error {
 
 	db, err := sqlx.Open("postgres", appConfig.PostgresConnLink)
 	if err != nil {
+		return fmt.Errorf("connecting postgres: %w", err)
+	}
+
+	validator, err := protovalidate.New()
+	if err != nil {
+		return fmt.Errorf("creating protovalidator: %w", err)
+	}
+
+	taskPsqlStorage := psql_store.NewTaskPsqlStorage(db)
+
+	newConfig := sarama.NewConfig()
+	newConfig.Producer.RequiredAcks = sarama.WaitForAll
+	newConfig.Producer.Partitioner = sarama.NewHashPartitioner
+	newConfig.Producer.Return.Successes = true
+
+	syncProducer, err := sarama.NewSyncProducer([]string{appConfig.KafkaConfig.Address}, newConfig)
+	if err != nil {
 		return err
 	}
 
-	taskPsqlStorage := storage.NewTaskPsqlStorage(db)
-	taskService := services.NewTaskService(taskPsqlStorage)
-	taskGRPCServer := grpc.NewTaskServiceServer(taskService)
+	sender := kafka.NewKafkaSender(syncProducer)
+
+	taskService := services.NewTaskService(taskPsqlStorage, sender)
+	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
 

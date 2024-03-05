@@ -5,25 +5,28 @@ import (
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
 	"log"
 )
 
 type TaskServiceServer struct {
 	taskpbv1.UnimplementedTaskServiceServer
+	Validator   *protovalidate.Validator
 	taskService services.ITaskService
 }
 
-func NewTaskServiceServer(taskService services.ITaskService) *TaskServiceServer {
+func NewTaskServiceServer(validator *protovalidate.Validator, taskService services.ITaskService) *TaskServiceServer {
 	return &TaskServiceServer{
+		Validator:   validator,
 		taskService: taskService,
 	}
 }
 
 func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
-	log.Println("create")
+	log.Println("create in TaskServiceServer")
 
-	if err := createRequest.Validate(); err != nil {
+	if err := s.Validator.Validate(createRequest); err != nil {
 		return nil, err
 	}
 
