@@ -29,19 +29,29 @@ func NewTaskService(taskStorage storages.ITaskStorage, eventSender queues.IQueue
 
 func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (int64, error) {
 	log.Println("create in TaskService")
-	id, err := ts.taskStorage.Create(ctx, input)
+	task, err := ts.taskStorage.Create(ctx, input)
+	if err != nil {
+		// TODO: Handle errors
+		return 0, err
+	}
+
+	jTask, err := task.ToJson()
 	if err != nil {
 		// TODO: Handle errors
 		return 0, err
 	}
 
 	// TODO: Send events like "new task created", topic - "?", partition - "?"
-	err = ts.eventSender.Send(ctx, []byte("testK"), []byte("testV"))
+	err = ts.eventSender.Send(ctx, &queues.Event{ // Move to ts.SendEvent(task)
+		Topic: "async_arc_topic",
+		Name:  "task.created",
+		Data:  jTask,
+	})
 	if err != nil {
 		// TODO: Log something
 	}
 
-	return id, nil
+	return task.ID, nil
 }
 
 func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, error) {

@@ -1,6 +1,9 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+	"github.com/google/uuid"
+)
 
 type Task struct {
 	ID          int64
@@ -9,6 +12,10 @@ type Task struct {
 	CustomerID  uuid.UUID
 	ExecutorID  uuid.UUID
 	Status      Status
+}
+
+func (t *Task) ToJson() ([]byte, error) {
+	return json.Marshal(t)
 }
 
 type CreateTask struct {

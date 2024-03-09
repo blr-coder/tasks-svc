@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/errs"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/google/uuid"
 
 	// DB driver
 	"github.com/jmoiron/sqlx"
@@ -21,9 +22,16 @@ func NewTaskPsqlStorage(database *sqlx.DB) *TaskPsqlStorage {
 	return &TaskPsqlStorage{db: database}
 }
 
-func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateTask) (int64, error) {
+func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateTask) (*models.Task, error) {
 
-	return 999, nil
+	return &models.Task{
+		ID:          999,
+		Title:       "test title",
+		Description: "test description",
+		CustomerID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
+		ExecutorID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
+		Status:      models.PendingStatus,
+	}, nil
 }
 
 func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, error) {
