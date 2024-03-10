@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
-	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues"
+	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages"
 	"log"
 )
@@ -17,14 +17,36 @@ type ITaskService interface {
 
 type TaskService struct {
 	taskStorage storages.ITaskStorage
-	eventSender queues.IQueueEventSender
+	eventSender events.IEventSender
 }
 
-func NewTaskService(taskStorage storages.ITaskStorage, eventSender queues.IQueueEventSender) *TaskService {
+func NewTaskService(taskStorage storages.ITaskStorage, eventSender events.IEventSender) *TaskService {
 	return &TaskService{
 		taskStorage: taskStorage,
 		eventSender: eventSender,
 	}
+}
+
+func (ts *TaskService) sendEvent(ctx context.Context, task *models.Task, topic events.Topic, name events.Name) {
+	jTask, err := task.ToJson()
+	if err != nil {
+		// TODO: Handle errors
+		log.Println("sendEvent ERR", err)
+		return
+	}
+
+	// TODO: Think about worker pool in TaskService for sending events
+	err = ts.eventSender.Send(ctx, &events.Event{
+		Topic: topic,
+		Name:  name,
+		Data:  jTask,
+	})
+	if err != nil {
+		// TODO: Log something
+		log.Println("sendEvent ERR", err)
+	}
+
+	return
 }
 
 func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (int64, error) {
@@ -35,21 +57,7 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 		return 0, err
 	}
 
-	jTask, err := task.ToJson()
-	if err != nil {
-		// TODO: Handle errors
-		return 0, err
-	}
-
-	// TODO: Send events like "new task created", topic - "?", partition - "?"
-	err = ts.eventSender.Send(ctx, &queues.Event{ // Move to ts.SendEvent(task)
-		Topic: "async_arc_topic",
-		Name:  "task.created",
-		Data:  jTask,
-	})
-	if err != nil {
-		// TODO: Log something
-	}
+	go ts.sendEvent(ctx, task, events.CUDTopic, events.TaskCreated)
 
 	return task.ID, nil
 }
@@ -64,6 +72,14 @@ func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, err
 }
 
 func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
+	log.Println("delete in TaskService")
+	err := ts.taskStorage.Delete(ctx, taskID)
+	if err != nil {
+		// TODO: Handle errors
+		return err
+	}
+
+	go ts.sendEvent(ctx, &models.Task{ID: taskID}, events.CUDTopic, events.TaskDeleted)
 
 	return nil
 }

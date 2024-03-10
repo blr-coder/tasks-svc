@@ -12,4 +12,6 @@ type IStorage interface {
 type ITaskStorage interface {
 	Create(ctx context.Context, createTask *models.CreateTask) (*models.Task, error)
 	Get(ctx context.Context, taskID int64) (*models.Task, error)
+
+	Delete(ctx context.Context, taskID int64) error
 }

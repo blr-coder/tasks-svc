@@ -1,10 +1,12 @@
 module github.com/blr-coder/tasks-svc
 
-go 1.20
+go 1.21
+
+toolchain go1.22.0
 
 require (
 	github.com/IBM/sarama v1.43.0
-	github.com/blr-coder/task-proto v0.0.0-20240304101601-1babef7f3b75
+	github.com/blr-coder/task-proto v0.0.0-20240310195115-aaac69e4c949
 	github.com/bufbuild/protovalidate-go v0.6.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.6.0
@@ -15,7 +17,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240221180331-f05a6f4403ce.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.33.0-20240221180331-f05a6f4403ce.1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/eapache/go-resiliency v1.6.0 // indirect
@@ -45,7 +47,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )

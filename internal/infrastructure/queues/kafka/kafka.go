@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/IBM/sarama"
-	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues"
+	"github.com/blr-coder/tasks-svc/internal/events"
 	"log"
 	"time"
 )
@@ -18,12 +18,12 @@ func NewKafkaSender(producer sarama.SyncProducer) *Sender {
 	}
 }
 
-func (s *Sender) Send(ctx context.Context, event *queues.Event) error {
+func (s *Sender) Send(ctx context.Context, event *events.Event) error {
 	log.Println("Send")
 	_, _, err := s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
-		Topic:     event.Topic,
+		Topic:     string(event.Topic),
 		Key:       sarama.StringEncoder(event.Name),
-		Value:     sarama.StringEncoder(event.Data),
+		Value:     sarama.ByteEncoder(event.Data),
 		Headers:   nil,
 		Metadata:  nil,
 		Offset:    -1,

@@ -56,7 +56,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 }
 
 func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
-	log.Println("gat")
+	log.Println("get")
 
 	task, err := s.taskService.Get(ctx, getRequest.GetTaskId())
 	if err != nil {
@@ -66,4 +66,14 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 	log.Println(task)
 
 	return &taskpbv1.GetTaskResponse{}, nil
+}
+
+func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskpbv1.DeleteTaskRequest) (*taskpbv1.DeleteTaskResponse, error) {
+	log.Println("delete")
+
+	if err := s.taskService.Delete(ctx, deleteRequest.GetTaskId()); err != nil {
+		return nil, err
+	}
+
+	return &taskpbv1.DeleteTaskResponse{}, nil
 }
