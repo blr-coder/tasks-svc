@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"time"
 )
 
 type Task struct {
@@ -12,6 +13,8 @@ type Task struct {
 	CustomerID  uuid.UUID
 	ExecutorID  uuid.UUID
 	Status      Status
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func (t *Task) ToJson() ([]byte, error) {
@@ -23,6 +26,29 @@ type CreateTask struct {
 	Description string
 	CustomerID  uuid.UUID
 	ExecutorID  uuid.UUID
+}
+
+type ListTasksFilter struct {
+	CustomerID uuid.UUID
+	ExecutorID uuid.UUID
+	Status     Status
+	Search     string
+	Sorting    Sorting
+	Limiting   Limiting
+}
+
+type Sorting struct {
+	SortBy, SortOrder string
+}
+
+type Limiting struct {
+	Limit, Offset int32
+}
+
+type UpdateTask struct {
+	ID          int64
+	Title       string
+	Description string
 }
 
 type Status string

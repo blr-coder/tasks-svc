@@ -1,9 +1,14 @@
 package events
 
-import "context"
+import (
+	"context"
+	"github.com/blr-coder/tasks-svc/internal/domain/models"
+)
 
 type IEventSender interface {
 	Send(ctx context.Context, event *Event) error
+	TaskCreated(ctx context.Context, task *models.Task)
+	TaskDeleted(ctx context.Context, task *models.Task)
 }
 
 type Event struct {

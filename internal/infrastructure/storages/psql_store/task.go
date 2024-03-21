@@ -57,6 +57,21 @@ func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, 
 	return task, nil
 }
 
+func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error) {
+
+	return nil, nil
+}
+
+func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error) {
+
+	return 0, nil
+}
+
+func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.UpdateTask) error {
+
+	return nil
+}
+
 func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {
 	log.Println("Delete in Storage", taskID)
 	return nil

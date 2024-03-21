@@ -5,14 +5,21 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages"
+	"github.com/google/uuid"
 	"log"
 )
 
 type ITaskService interface {
 	Create(ctx context.Context, input *models.CreateTask) (int64, error)
 	Get(ctx context.Context, taskID int64) (*models.Task, error)
-
+	List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error)
+	Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error)
+	Update(ctx context.Context, input *models.UpdateTask) error
 	Delete(ctx context.Context, taskID int64) error
+
+	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
+	AssignRandomExecutor(ctx context.Context, taskId int64) error
+	SetStatus(ctx context.Context, taskID int64, status models.Status) error
 }
 
 type TaskService struct {
@@ -27,28 +34,6 @@ func NewTaskService(taskStorage storages.ITaskStorage, eventSender events.IEvent
 	}
 }
 
-func (ts *TaskService) sendEvent(ctx context.Context, task *models.Task, topic events.Topic, name events.Name) {
-	jTask, err := task.ToJson()
-	if err != nil {
-		// TODO: Handle errors
-		log.Println("sendEvent ERR", err)
-		return
-	}
-
-	// TODO: Think about worker pool in TaskService for sending events
-	err = ts.eventSender.Send(ctx, &events.Event{
-		Topic: topic,
-		Name:  name,
-		Data:  jTask,
-	})
-	if err != nil {
-		// TODO: Log something
-		log.Println("sendEvent ERR", err)
-	}
-
-	return
-}
-
 func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (int64, error) {
 	log.Println("create in TaskService")
 	task, err := ts.taskStorage.Create(ctx, input)
@@ -57,7 +42,7 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 		return 0, err
 	}
 
-	go ts.sendEvent(ctx, task, events.CUDTopic, events.TaskCreated)
+	go ts.eventSender.TaskCreated(ctx, task)
 
 	return task.ID, nil
 }
@@ -71,6 +56,21 @@ func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, err
 	return task, nil
 }
 
+func (ts *TaskService) List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error) {
+
+	return nil, nil
+}
+
+func (ts *TaskService) Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error) {
+
+	return 0, nil
+}
+
+func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) error {
+
+	return nil
+}
+
 func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 	log.Println("delete in TaskService")
 	err := ts.taskStorage.Delete(ctx, taskID)
@@ -79,7 +79,22 @@ func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 		return err
 	}
 
-	go ts.sendEvent(ctx, &models.Task{ID: taskID}, events.CUDTopic, events.TaskDeleted)
+	go ts.eventSender.TaskDeleted(ctx, &models.Task{ID: taskID})
+
+	return nil
+}
+
+func (ts *TaskService) AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error {
+
+	return nil
+}
+
+func (ts *TaskService) AssignRandomExecutor(ctx context.Context, taskId int64) error {
+
+	return nil
+}
+
+func (ts *TaskService) SetStatus(ctx context.Context, taskID int64, status models.Status) error {
 
 	return nil
 }
