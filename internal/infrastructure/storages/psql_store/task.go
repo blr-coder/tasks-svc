@@ -57,19 +57,26 @@ func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, 
 	return task, nil
 }
 
-func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error) {
+func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error) {
 
 	return nil, nil
 }
 
-func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error) {
+func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {
 
 	return 0, nil
 }
 
-func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.UpdateTask) error {
+func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*models.Task, error) {
 
-	return nil
+	return &models.Task{
+		ID:          20000,
+		Title:       "Fix2 errors handling UPDATED",
+		Description: "Fix2 errors handling description UPDATED",
+		CustomerID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
+		ExecutorID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
+		Status:      models.PendingStatus,
+	}, nil
 }
 
 func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {

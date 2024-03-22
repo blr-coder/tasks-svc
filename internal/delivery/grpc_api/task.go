@@ -68,6 +68,21 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 	return &taskpbv1.GetTaskResponse{}, nil
 }
 
+func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
+	log.Println("update")
+
+	err := s.taskService.Update(ctx, &models.Task{
+		ID:          updateRequest.GetTaskId(),
+		Title:       updateRequest.GetTitle(),
+		Description: updateRequest.GetDescription(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &taskpbv1.UpdateTaskResponse{}, nil
+}
+
 func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskpbv1.DeleteTaskRequest) (*taskpbv1.DeleteTaskResponse, error) {
 	log.Println("delete")
 

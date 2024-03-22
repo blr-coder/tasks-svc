@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/IBM/sarama v1.43.0
-	github.com/blr-coder/task-proto v0.0.0-20240310195115-aaac69e4c949
+	github.com/blr-coder/task-proto v0.0.0-20240322215525-0284242ebffa
 	github.com/bufbuild/protovalidate-go v0.6.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.6.0

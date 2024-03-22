@@ -28,7 +28,7 @@ type CreateTask struct {
 	ExecutorID  uuid.UUID
 }
 
-type ListTasksFilter struct {
+type TasksFilter struct {
 	CustomerID uuid.UUID
 	ExecutorID uuid.UUID
 	Status     Status
@@ -43,12 +43,6 @@ type Sorting struct {
 
 type Limiting struct {
 	Limit, Offset int32
-}
-
-type UpdateTask struct {
-	ID          int64
-	Title       string
-	Description string
 }
 
 type Status string

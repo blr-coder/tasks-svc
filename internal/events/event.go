@@ -7,26 +7,28 @@ import (
 
 type IEventSender interface {
 	Send(ctx context.Context, event *Event) error
-	TaskCreated(ctx context.Context, task *models.Task)
-	TaskDeleted(ctx context.Context, task *models.Task)
+	SendTaskCreated(ctx context.Context, task *models.Task)
+	SendTaskUpdated(ctx context.Context, task *models.Task)
+	SendTaskDeleted(ctx context.Context, task *models.Task)
 }
 
 type Event struct {
-	Topic Topic  `json:"topic"`
-	Name  Name   `json:"name"`
-	Data  []byte `json:"value"`
+	Topic EventTopic `json:"topic"`
+	Name  EventName  `json:"name"`
+	Data  []byte     `json:"value"`
 }
 
-type Name string
+type EventName string
 
 const (
-	TaskCreated Name = "task_created"
-	TaskDeleted Name = "task_deleted"
+	TaskCreated EventName = "task_created"
+	TaskUpdated EventName = "task_updated"
+	TaskDeleted EventName = "task_deleted"
 )
 
-type Topic string
+type EventTopic string
 
 const (
-	CUDTopic       Topic = "TASK_CUD_STREAMING_TOPIC"
-	LifecycleTopic Topic = "TASK_LIFECYCLE_STREAMING_TOPIC"
+	CUDTopic       EventTopic = "TASK_CUD_STREAMING_TOPIC"
+	LifecycleTopic EventTopic = "TASK_LIFECYCLE_STREAMING_TOPIC"
 )

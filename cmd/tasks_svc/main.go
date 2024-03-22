@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
@@ -66,17 +65,10 @@ func runApp() error {
 
 	taskPsqlStorage := psql_store.NewTaskPsqlStorage(db)
 
-	newConfig := sarama.NewConfig()
-	newConfig.Producer.RequiredAcks = sarama.WaitForAll
-	newConfig.Producer.Partitioner = sarama.NewHashPartitioner
-	newConfig.Producer.Return.Successes = true
-
-	syncProducer, err := sarama.NewSyncProducer([]string{appConfig.KafkaConfig.Address}, newConfig)
+	sender, err := kafka.NewKafkaSender(appConfig.KafkaConfig)
 	if err != nil {
 		return err
 	}
-
-	sender := kafka.NewKafkaSender(syncProducer)
 
 	taskService := services.NewTaskService(taskPsqlStorage, sender)
 	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)

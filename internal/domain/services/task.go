@@ -12,9 +12,9 @@ import (
 type ITaskService interface {
 	Create(ctx context.Context, input *models.CreateTask) (int64, error)
 	Get(ctx context.Context, taskID int64) (*models.Task, error)
-	List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error)
-	Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error)
-	Update(ctx context.Context, input *models.UpdateTask) error
+	List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error)
+	Count(ctx context.Context, filter *models.TasksFilter) (uint64, error)
+	Update(ctx context.Context, input *models.Task) error
 	Delete(ctx context.Context, taskID int64) error
 
 	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
@@ -42,7 +42,7 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 		return 0, err
 	}
 
-	go ts.eventSender.TaskCreated(ctx, task)
+	go ts.eventSender.SendTaskCreated(ctx, task)
 
 	return task.ID, nil
 }
@@ -56,17 +56,24 @@ func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, err
 	return task, nil
 }
 
-func (ts *TaskService) List(ctx context.Context, filter *models.ListTasksFilter) ([]*models.Task, error) {
+func (ts *TaskService) List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error) {
 
 	return nil, nil
 }
 
-func (ts *TaskService) Count(ctx context.Context, filter *models.ListTasksFilter) (uint64, error) {
+func (ts *TaskService) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {
 
 	return 0, nil
 }
 
-func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) error {
+func (ts *TaskService) Update(ctx context.Context, input *models.Task) error {
+	log.Println("update in TaskService")
+	task, err := ts.taskStorage.Update(ctx, input)
+	if err != nil {
+		return err
+	}
+
+	go ts.eventSender.SendTaskUpdated(ctx, task)
 
 	return nil
 }
@@ -79,7 +86,7 @@ func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 		return err
 	}
 
-	go ts.eventSender.TaskDeleted(ctx, &models.Task{ID: taskID})
+	go ts.eventSender.SendTaskDeleted(ctx, &models.Task{ID: taskID})
 
 	return nil
 }
