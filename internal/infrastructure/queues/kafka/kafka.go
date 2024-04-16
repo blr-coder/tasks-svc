@@ -52,6 +52,8 @@ func (s *Sender) Send(ctx context.Context, event *events.Event) error {
 func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
 	log.Println("TaskCreatedSend")
 
+	// TODO: Use generated struct from proto. Then use proto.Marshal. Then s.kafkaProducer.SendMessage.
+
 	jTask, err := task.ToJson()
 	if err != nil {
 		log.Println("EEEERRRRROOOORRRR", err)
@@ -60,7 +62,7 @@ func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
 
 	_, _, err = s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
 		Topic:     string(events.CUDTopic),
-		Key:       sarama.StringEncoder(events.TaskCreated),
+		Key:       sarama.StringEncoder(events.TaskCreated), // TODO: Move to proto
 		Value:     sarama.ByteEncoder(jTask),
 		Headers:   nil,
 		Metadata:  nil,
