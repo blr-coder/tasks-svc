@@ -2,10 +2,14 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/IBM/sarama"
+	taskschemasregistry "github.com/blr-coder/task_system_schemas_registry/task_svc"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"time"
 )
@@ -52,18 +56,29 @@ func (s *Sender) Send(ctx context.Context, event *events.Event) error {
 func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
 	log.Println("TaskCreatedSend")
 
-	// TODO: Use generated struct from proto. Then use proto.Marshal. Then s.kafkaProducer.SendMessage.
+	event := &taskschemasregistry.BaseEvent{
+		Id:        uuid.New().String(),
+		CreatedAt: timestamppb.New(time.Now().UTC()),
+		TopicType: taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING,
+		EventType: taskschemasregistry.EventType_EVENT_TYPE_CREATED,
+		Data:      domainTaskToPB(task),
+	}
 
-	jTask, err := task.ToJson()
+	// TODO: Think about proto.Marshal(event)
+	/*kafkaMessageValue, err := proto.Marshal(event)
+	if err != nil {
+		return err
+	}*/
+
+	kafkaMessageValue, err := json.Marshal(event)
 	if err != nil {
 		log.Println("EEEERRRRROOOORRRR", err)
-		return
 	}
 
 	_, _, err = s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
-		Topic:     string(events.CUDTopic),
-		Key:       sarama.StringEncoder(events.TaskCreated), // TODO: Move to proto
-		Value:     sarama.ByteEncoder(jTask),
+		Topic:     taskschemasregistry.TopicType_name[int32(taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING)],
+		Key:       sarama.StringEncoder(taskschemasregistry.EventType_EVENT_TYPE_CREATED),
+		Value:     sarama.ByteEncoder(kafkaMessageValue),
 		Headers:   nil,
 		Metadata:  nil,
 		Offset:    -1,
@@ -130,4 +145,29 @@ func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) {
 
 	log.Println("TaskDeleted SENT")
 	return
+}
+
+func domainTaskStatusToPB(domainStatus models.Status) (pbStatus taskschemasregistry.TaskStatus) {
+	switch domainStatus {
+	case models.PendingStatus:
+		pbStatus = taskschemasregistry.TaskStatus_TASK_STATUS_PENDING
+	case models.ProcessingStatus:
+		pbStatus = taskschemasregistry.TaskStatus_TASK_STATUS_PROCESSING
+	case models.DoneStatus:
+		pbStatus = taskschemasregistry.TaskStatus_TASK_STATUS_DONE
+	}
+	return pbStatus
+}
+
+func domainTaskToPB(task *models.Task) *taskschemasregistry.TaskV1 {
+	return &taskschemasregistry.TaskV1{
+		Id:          task.ID,
+		Title:       task.Title,
+		Description: task.Description,
+		CustomerId:  task.CustomerID.String(),
+		ExecutorId:  task.ExecutorID.String(),
+		Status:      domainTaskStatusToPB(task.Status),
+		CreatedAt:   timestamppb.New(task.CreatedAt),
+		UpdatedAt:   timestamppb.New(task.UpdatedAt),
+	}
 }
