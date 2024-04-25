@@ -7,9 +7,9 @@ import (
 
 type IEventSender interface {
 	Send(ctx context.Context, event *Event) error
-	SendTaskCreated(ctx context.Context, task *models.Task)
-	SendTaskUpdated(ctx context.Context, task *models.Task)
-	SendTaskDeleted(ctx context.Context, task *models.Task)
+	SendTaskCreated(ctx context.Context, task *models.Task) error
+	SendTaskUpdated(ctx context.Context, task *models.Task) error
+	SendTaskDeleted(ctx context.Context, task *models.Task) error
 }
 
 type Event struct {

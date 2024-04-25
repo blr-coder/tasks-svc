@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages"
@@ -38,11 +39,13 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 	log.Println("create in TaskService")
 	task, err := ts.taskStorage.Create(ctx, input)
 	if err != nil {
-		// TODO: Handle errors
-		return 0, err
+		return 0, fmt.Errorf("create new task err, %w", err)
 	}
 
-	go ts.eventSender.SendTaskCreated(ctx, task)
+	err = ts.eventSender.SendTaskCreated(ctx, task)
+	if err != nil {
+		return 0, fmt.Errorf("sending event err, %w", err)
+	}
 
 	return task.ID, nil
 }
@@ -73,7 +76,10 @@ func (ts *TaskService) Update(ctx context.Context, input *models.Task) error {
 		return err
 	}
 
-	go ts.eventSender.SendTaskUpdated(ctx, task)
+	err = ts.eventSender.SendTaskUpdated(ctx, task)
+	if err != nil {
+		return fmt.Errorf("sending event err, %w", err)
+	}
 
 	return nil
 }
@@ -86,7 +92,10 @@ func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 		return err
 	}
 
-	go ts.eventSender.SendTaskDeleted(ctx, &models.Task{ID: taskID})
+	err = ts.eventSender.SendTaskDeleted(ctx, &models.Task{ID: taskID})
+	if err != nil {
+		return fmt.Errorf("sending event err, %w", err)
+	}
 
 	return nil
 }
@@ -97,6 +106,7 @@ func (ts *TaskService) AssignExecutor(ctx context.Context, taskID int64, executo
 }
 
 func (ts *TaskService) AssignRandomExecutor(ctx context.Context, taskId int64) error {
+	// TODO: Go to user/auth svc for getting random executor
 
 	return nil
 }

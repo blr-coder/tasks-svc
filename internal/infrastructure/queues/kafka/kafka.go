@@ -46,14 +46,14 @@ func (s *Sender) Send(ctx context.Context, event *events.Event) error {
 		Timestamp: time.Now(),
 	})
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
+		return err
 	}
 
 	log.Println("SENT")
 	return nil
 }
 
-func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
+func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) error {
 	log.Println("TaskCreatedSend")
 
 	event := &taskschemasregistry.BaseEvent{
@@ -72,7 +72,7 @@ func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
 
 	kafkaMessageValue, err := json.Marshal(event)
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
+		return err
 	}
 
 	_, _, err = s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
@@ -86,26 +86,33 @@ func (s *Sender) SendTaskCreated(ctx context.Context, task *models.Task) {
 		Timestamp: time.Now(),
 	})
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
+		return err
 	}
 
 	log.Println("TaskCreated SENT")
-	return
+	return nil
 }
 
-func (s *Sender) SendTaskUpdated(ctx context.Context, task *models.Task) {
+func (s *Sender) SendTaskUpdated(ctx context.Context, task *models.Task) error {
 	log.Println("TaskUpdated")
 
-	jTask, err := task.ToJson()
+	event := &taskschemasregistry.BaseEvent{
+		Id:        uuid.New().String(),
+		CreatedAt: timestamppb.New(time.Now().UTC()),
+		TopicType: taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING,
+		EventType: taskschemasregistry.EventType_EVENT_TYPE_UPDATED,
+		Data:      domainTaskToPB(task),
+	}
+
+	kafkaMessageValue, err := json.Marshal(event)
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
-		return
+		return err
 	}
 
 	_, _, err = s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
-		Topic:     string(events.CUDTopic),
-		Key:       sarama.StringEncoder(events.TaskUpdated),
-		Value:     sarama.ByteEncoder(jTask),
+		Topic:     taskschemasregistry.TopicType_name[int32(taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING)],
+		Key:       sarama.StringEncoder(taskschemasregistry.EventType_EVENT_TYPE_UPDATED),
+		Value:     sarama.ByteEncoder(kafkaMessageValue),
 		Headers:   nil,
 		Metadata:  nil,
 		Offset:    -1,
@@ -113,26 +120,33 @@ func (s *Sender) SendTaskUpdated(ctx context.Context, task *models.Task) {
 		Timestamp: time.Now(),
 	})
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
+		return err
 	}
 
 	log.Println("TaskUpdated SENT")
-	return
+	return nil
 }
 
-func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) {
+func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) error {
 	log.Println("TaskDeleted")
 
-	jTask, err := task.ToJson()
+	event := &taskschemasregistry.BaseEvent{
+		Id:        uuid.New().String(),
+		CreatedAt: timestamppb.New(time.Now().UTC()),
+		TopicType: taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING,
+		EventType: taskschemasregistry.EventType_EVENT_TYPE_DELETED,
+		Data:      domainTaskToPB(task),
+	}
+
+	kafkaMessageValue, err := json.Marshal(event)
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
-		return
+		return err
 	}
 
 	_, _, err = s.kafkaProducer.SendMessage(&sarama.ProducerMessage{
-		Topic:     string(events.CUDTopic),
-		Key:       sarama.StringEncoder(events.TaskDeleted),
-		Value:     sarama.ByteEncoder(jTask),
+		Topic:     taskschemasregistry.TopicType_name[int32(taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING)],
+		Key:       sarama.StringEncoder(taskschemasregistry.EventType_EVENT_TYPE_DELETED),
+		Value:     sarama.ByteEncoder(kafkaMessageValue),
 		Headers:   nil,
 		Metadata:  nil,
 		Offset:    -1,
@@ -140,11 +154,11 @@ func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) {
 		Timestamp: time.Now(),
 	})
 	if err != nil {
-		log.Println("EEEERRRRROOOORRRR", err)
+		return err
 	}
 
 	log.Println("TaskDeleted SENT")
-	return
+	return nil
 }
 
 func domainTaskStatusToPB(domainStatus models.Status) (pbStatus taskschemasregistry.TaskStatus) {
