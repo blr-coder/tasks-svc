@@ -7,14 +7,14 @@ import (
 )
 
 type Task struct {
-	ID          int64
-	Title       string
-	Description string
-	CustomerID  uuid.UUID
-	ExecutorID  uuid.UUID
-	Status      Status
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int64      `json:"id" db:"id"`
+	Title       string     `json:"title" db:"title"`
+	Description string     `json:"description" db:"description"`
+	CustomerID  uuid.UUID  `json:"customer_id" db:"customer_id"`
+	ExecutorID  *uuid.UUID `json:"executor_id" db:"executor_id"`
+	Status      Status     `json:"status" db:"status"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 func (t *Task) ToJson() ([]byte, error) {

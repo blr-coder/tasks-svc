@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: postgres:13.1
+    container_name: task-svc-db
+    restart: always
+    environment:
+      POSTGRES_DB: task_svc_db
+      POSTGRES_USER: task_svc_db_user
+      POSTGRES_PASSWORD: task_svc_db_user_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - 5232:5432
+    volumes:
+      - task-pg-data:/var/lib/postgresql/data/
+
+volumes:
+  task-pg-data:

@@ -25,14 +25,31 @@ func NewTaskPsqlStorage(database *sqlx.DB) *TaskPsqlStorage {
 
 func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateTask) (*models.Task, error) {
 	log.Println("Create in Storage")
-	return &models.Task{
-		ID:          20000,
-		Title:       "Fix2 errors handling",
-		Description: "Fix2 errors handling description",
-		CustomerID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
-		ExecutorID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
-		Status:      models.PendingStatus,
-	}, nil
+
+	query := `
+		INSERT INTO tasks 
+		    (title, description, customer_id, executor_id, status)
+		VALUES 
+		    ($1, $2, $3, $4, $5)
+		RETURNING *`
+
+	task := &models.Task{}
+
+	err := s.db.GetContext(
+		ctx,
+		task,
+		query,
+		createTask.Title,
+		createTask.Description,
+		createTask.CustomerID,
+		createTask.ExecutorID,
+		models.PendingStatus,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
 
 func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, error) {
@@ -68,13 +85,13 @@ func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter)
 }
 
 func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*models.Task, error) {
-
+	eID := uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`))
 	return &models.Task{
 		ID:          20000,
 		Title:       "Fix2 errors handling UPDATED",
 		Description: "Fix2 errors handling description UPDATED",
 		CustomerID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
-		ExecutorID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
+		ExecutorID:  &eID,
 		Status:      models.PendingStatus,
 	}, nil
 }
