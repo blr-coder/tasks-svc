@@ -46,7 +46,7 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 		models.PendingStatus,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create task in storage err: %w", err)
 	}
 
 	return task, nil

@@ -20,7 +20,7 @@ type ITaskService interface {
 
 	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
 	AssignRandomExecutor(ctx context.Context, taskId int64) error
-	SetStatus(ctx context.Context, taskID int64, status models.Status) error
+	SetStatus(ctx context.Context, taskID int64, status models.TaskStatus) error
 }
 
 type TaskService struct {
@@ -111,7 +111,7 @@ func (ts *TaskService) AssignRandomExecutor(ctx context.Context, taskId int64) e
 	return nil
 }
 
-func (ts *TaskService) SetStatus(ctx context.Context, taskID int64, status models.Status) error {
+func (ts *TaskService) SetStatus(ctx context.Context, taskID int64, status models.TaskStatus) error {
 
 	return nil
 }

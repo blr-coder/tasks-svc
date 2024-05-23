@@ -161,7 +161,7 @@ func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) error {
 	return nil
 }
 
-func domainTaskStatusToPB(domainStatus models.Status) (pbStatus taskschemasregistry.TaskStatus) {
+func domainTaskStatusToPB(domainStatus models.TaskStatus) (pbStatus taskschemasregistry.TaskStatus) {
 	switch domainStatus {
 	case models.PendingStatus:
 		pbStatus = taskschemasregistry.TaskStatus_TASK_STATUS_PENDING
