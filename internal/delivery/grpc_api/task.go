@@ -7,7 +7,6 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 )
 
@@ -66,18 +65,16 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 
 	log.Println(task)
 
-	return &taskpbv1.GetTaskResponse{
-		Task: &taskpbv1.Task{
-			Id:          task.ID,
-			Title:       task.Title,
-			Description: task.Description,
-			CustomerId:  task.CustomerID.String(),
-			ExecutorId:  task.ExecutorID.String(),
-			Status:      DomainTaskStatusToPB(task.Status),
-			CreatedAt:   timestamppb.New(task.CreatedAt),
-			UpdatedAt:   timestamppb.New(task.UpdatedAt),
-		},
-	}, nil
+	return &taskpbv1.GetTaskResponse{Task: domainTaskToPBTask(task)}, nil
+}
+
+func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
+	domainTasks, err := s.taskService.List(ctx, &models.TasksFilter{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &taskpbv1.ListTasksResponse{Tasks: domainTasksToPBTasks(domainTasks)}, nil
 }
 
 func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {

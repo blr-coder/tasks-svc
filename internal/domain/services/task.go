@@ -61,7 +61,7 @@ func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, err
 
 func (ts *TaskService) List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error) {
 
-	return nil, nil
+	return ts.taskStorage.List(ctx, filter)
 }
 
 func (ts *TaskService) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {

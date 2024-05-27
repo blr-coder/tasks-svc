@@ -74,9 +74,18 @@ func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, 
 	return task, nil
 }
 
-func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error) {
+func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.TasksFilter) (tasks []*models.Task, err error) {
+	query, args, err := s.buildQueryFromTasksFilter(filter, true)
+	if err != nil {
+		return tasks, fmt.Errorf("fetching tasks from DB error: %w", err)
+	}
 
-	return nil, nil
+	err = s.db.SelectContext(ctx, &tasks, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching tasks from DB error: %w", err)
+	}
+
+	return tasks, nil
 }
 
 func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {
@@ -99,4 +108,22 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
 func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {
 	log.Println("Delete in Storage", taskID)
 	return nil
+}
+
+func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, isList bool) (string, []any, error) {
+	var (
+		query string
+		args  []any
+		err   error
+	)
+
+	if isList {
+		query = `SELECT id, title, description, customer_id, executor_id, status, created_at, updated_at FROM tasks`
+	} else {
+		query = `SELECT count(*) FROM tasks`
+	}
+
+	query = s.db.Rebind(query)
+
+	return query, args, err
 }
