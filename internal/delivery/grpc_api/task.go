@@ -77,6 +77,15 @@ func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1
 	return &taskpbv1.ListTasksResponse{Tasks: domainTasksToPBTasks(domainTasks)}, nil
 }
 
+func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpbv1.TotalTasksRequest) (*taskpbv1.TotalTasksResponse, error) {
+	total, err := s.taskService.Count(ctx, &models.TasksFilter{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &taskpbv1.TotalTasksResponse{Total: total}, nil
+}
+
 func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
 	log.Println("update")
 

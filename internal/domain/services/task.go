@@ -66,7 +66,7 @@ func (ts *TaskService) List(ctx context.Context, filter *models.TasksFilter) ([]
 
 func (ts *TaskService) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {
 
-	return 0, nil
+	return ts.taskStorage.Count(ctx, filter)
 }
 
 func (ts *TaskService) Update(ctx context.Context, input *models.Task) error {
@@ -92,7 +92,7 @@ func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 		return err
 	}
 
-	err = ts.eventSender.SendTaskDeleted(ctx, &models.Task{ID: taskID})
+	err = ts.eventSender.SendTaskDeleted(ctx, taskID)
 	if err != nil {
 		return fmt.Errorf("sending event err, %w", err)
 	}

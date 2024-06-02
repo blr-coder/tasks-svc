@@ -89,8 +89,18 @@ func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.TasksFilter) 
 }
 
 func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter) (uint64, error) {
+	var count uint64
+	query, args, err := s.buildQueryFromTasksFilter(filter, false)
+	if err != nil {
+		return 0, fmt.Errorf("fetching tasks from DB error: %w", err)
+	}
 
-	return 0, nil
+	err = s.db.GetContext(ctx, &count, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("fetching tasks from DB error: %w", err)
+	}
+
+	return count, nil
 }
 
 func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*models.Task, error) {
@@ -107,6 +117,24 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
 
 func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {
 	log.Println("Delete in Storage", taskID)
+
+	q := `DELETE FROM tasks WHERE id = $1`
+
+	res, err := s.db.ExecContext(ctx, s.db.Rebind(q), taskID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		//return errs.NewDomainDeleteError()
+		return fmt.Errorf("delete task from DB error: %w", err)
+	}
+
 	return nil
 }
 

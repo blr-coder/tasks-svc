@@ -127,7 +127,7 @@ func (s *Sender) SendTaskUpdated(ctx context.Context, task *models.Task) error {
 	return nil
 }
 
-func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) error {
+func (s *Sender) SendTaskDeleted(ctx context.Context, taskID int64) error {
 	log.Println("TaskDeleted")
 
 	event := &taskschemasregistry.BaseEvent{
@@ -135,7 +135,9 @@ func (s *Sender) SendTaskDeleted(ctx context.Context, task *models.Task) error {
 		CreatedAt: timestamppb.New(time.Now().UTC()),
 		TopicType: taskschemasregistry.TopicType_TOPIC_TYPE_CUD_STREAMING,
 		EventType: taskschemasregistry.EventType_EVENT_TYPE_DELETED,
-		Data:      domainTaskToPB(task),
+		Data: &taskschemasregistry.TaskV1{
+			Id: taskID,
+		},
 	}
 
 	kafkaMessageValue, err := json.Marshal(event)
