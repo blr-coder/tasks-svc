@@ -89,7 +89,7 @@ func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpb
 func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
 	log.Println("update")
 
-	err := s.taskService.Update(ctx, &models.Task{
+	err := s.taskService.Update(ctx, &models.UpdateTask{
 		ID:          updateRequest.GetTaskId(),
 		Title:       updateRequest.GetTitle(),
 		Description: updateRequest.GetDescription(),

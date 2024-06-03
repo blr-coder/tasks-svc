@@ -28,6 +28,12 @@ type CreateTask struct {
 	ExecutorID  uuid.UUID
 }
 
+type UpdateTask struct {
+	ID          int64
+	Title       string
+	Description string
+}
+
 type TasksFilter struct {
 	CustomerID uuid.UUID
 	ExecutorID uuid.UUID

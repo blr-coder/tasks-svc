@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
-	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
 	"github.com/google/uuid"
 	"log"
 )
@@ -15,7 +15,7 @@ type ITaskService interface {
 	Get(ctx context.Context, taskID int64) (*models.Task, error)
 	List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error)
 	Count(ctx context.Context, filter *models.TasksFilter) (uint64, error)
-	Update(ctx context.Context, input *models.Task) error
+	Update(ctx context.Context, input *models.UpdateTask) error
 	Delete(ctx context.Context, taskID int64) error
 
 	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
@@ -24,11 +24,11 @@ type ITaskService interface {
 }
 
 type TaskService struct {
-	taskStorage storages.ITaskStorage
+	taskStorage psql_store.ITaskStorage
 	eventSender events.IEventSender
 }
 
-func NewTaskService(taskStorage storages.ITaskStorage, eventSender events.IEventSender) *TaskService {
+func NewTaskService(taskStorage psql_store.ITaskStorage, eventSender events.IEventSender) *TaskService {
 	return &TaskService{
 		taskStorage: taskStorage,
 		eventSender: eventSender,
@@ -69,14 +69,25 @@ func (ts *TaskService) Count(ctx context.Context, filter *models.TasksFilter) (u
 	return ts.taskStorage.Count(ctx, filter)
 }
 
-func (ts *TaskService) Update(ctx context.Context, input *models.Task) error {
+func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) error {
 	log.Println("update in TaskService")
-	task, err := ts.taskStorage.Update(ctx, input)
+
+	task, err := ts.taskStorage.Get(ctx, input.ID)
 	if err != nil {
 		return err
 	}
 
-	err = ts.eventSender.SendTaskUpdated(ctx, task)
+	// TODO: Check status. Cannot update a task with the status DONE - task.IsUpdatePossible()
+
+	task.Title = input.Title
+	task.Description = input.Description
+
+	updatedTask, err := ts.taskStorage.Update(ctx, task)
+	if err != nil {
+		return err
+	}
+
+	err = ts.eventSender.SendTaskUpdated(ctx, updatedTask)
 	if err != nil {
 		return fmt.Errorf("sending event err, %w", err)
 	}

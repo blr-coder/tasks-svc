@@ -7,13 +7,21 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/errs"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
-	"github.com/google/uuid"
 	"log"
 
 	// DB driver
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
+
+type ITaskStorage interface {
+	Create(ctx context.Context, createTask *models.CreateTask) (*models.Task, error)
+	Get(ctx context.Context, taskID int64) (*models.Task, error)
+	List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error)
+	Count(ctx context.Context, filter *models.TasksFilter) (uint64, error)
+	Update(ctx context.Context, input *models.Task) (*models.Task, error)
+	Delete(ctx context.Context, taskID int64) error
+}
 
 type TaskPsqlStorage struct {
 	db *sqlx.DB
@@ -104,15 +112,35 @@ func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter)
 }
 
 func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*models.Task, error) {
-	eID := uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`))
-	return &models.Task{
-		ID:          20000,
-		Title:       "Fix2 errors handling UPDATED",
-		Description: "Fix2 errors handling description UPDATED",
-		CustomerID:  uuid.UUID([]byte(`13bb16c2-9d81-4697-bf43-430142f38ab5`)),
-		ExecutorID:  &eID,
-		Status:      models.PendingStatus,
-	}, nil
+	log.Println("Update in Storage")
+
+	var (
+		query = `UPDATE tasks SET 
+                 	title=$2, 
+                 	description=$3,
+                 	customer_id=$4,
+                 	executor_id=$5,
+                 	status=$6,
+                 	updated_at=CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
+             WHERE id=$1 RETURNING *`
+
+		updatedTask = &models.Task{}
+	)
+
+	if err := s.db.QueryRowxContext(
+		ctx,
+		query,
+		input.ID,
+		input.Title,
+		input.Description,
+		input.CustomerID,
+		input.ExecutorID,
+		input.Status,
+	).StructScan(updatedTask); err != nil {
+		return nil, fmt.Errorf("updating task in DB error: %w", err)
+	}
+
+	return updatedTask, nil
 }
 
 func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {
