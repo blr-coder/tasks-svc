@@ -25,13 +25,16 @@ type CreateTask struct {
 	Title       string
 	Description string
 	CustomerID  uuid.UUID
-	ExecutorID  uuid.UUID
+	ExecutorID  *uuid.UUID
 }
 
 type UpdateTask struct {
 	ID          int64
 	Title       string
 	Description string
+	CustomerID  uuid.UUID
+	ExecutorID  *uuid.UUID
+	Status      TaskStatus
 }
 
 type TasksFilter struct {

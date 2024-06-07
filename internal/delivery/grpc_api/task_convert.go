@@ -21,6 +21,22 @@ func DomainTaskStatusToPB(status models.TaskStatus) (pbStatus taskpbv1.TaskStatu
 	return pbStatus
 }
 
+func PbTaskStatusToDomain(pbStatus taskpbv1.TaskStatus) (dStatus models.TaskStatus) {
+	switch pbStatus {
+	case taskpbv1.TaskStatus_TASK_STATUS_PENDING:
+		dStatus = models.PendingStatus
+	case taskpbv1.TaskStatus_TASK_STATUS_PROCESSING:
+		dStatus = models.ProcessingStatus
+	case taskpbv1.TaskStatus_TASK_STATUS_DONE:
+		dStatus = models.DoneStatus
+	default:
+		// TODO: UNSPECIFIED???
+		dStatus = models.PendingStatus
+	}
+
+	return dStatus
+}
+
 func domainTasksToPBTasks(domainTasks []*models.Task) []*taskpbv1.Task {
 	ls := make([]*taskpbv1.Task, len(domainTasks))
 	for i, task := range domainTasks {

@@ -35,9 +35,15 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		return nil, err
 	}
 
-	executorID, err := uuid.Parse(createRequest.GetExecutorId())
-	if err != nil {
-		return nil, err
+	var executorID *uuid.UUID
+
+	if createRequest.GetExecutorId() != nil {
+		eID, err := uuid.Parse(createRequest.GetExecutorId().GetValue())
+		if err != nil {
+			return nil, err
+		}
+
+		executorID = &eID
 	}
 
 	newId, err := s.taskService.Create(ctx, &models.CreateTask{
@@ -89,16 +95,41 @@ func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpb
 func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
 	log.Println("update")
 
-	err := s.taskService.Update(ctx, &models.UpdateTask{
+	if err := s.Validator.Validate(updateRequest); err != nil {
+		return nil, err
+	}
+
+	customerID, err := uuid.Parse(updateRequest.GetCustomerId())
+	if err != nil {
+		return nil, err
+	}
+
+	var executorID *uuid.UUID
+
+	if updateRequest.GetExecutorId() != nil {
+		eID, err := uuid.Parse(updateRequest.GetExecutorId().GetValue())
+		if err != nil {
+			return nil, err
+		}
+
+		executorID = &eID
+	}
+
+	task, err := s.taskService.Update(ctx, &models.UpdateTask{
 		ID:          updateRequest.GetTaskId(),
 		Title:       updateRequest.GetTitle(),
 		Description: updateRequest.GetDescription(),
+		CustomerID:  customerID,
+		ExecutorID:  executorID,
+		Status:      PbTaskStatusToDomain(updateRequest.GetStatus()),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &taskpbv1.UpdateTaskResponse{}, nil
+	return &taskpbv1.UpdateTaskResponse{
+		Task: domainTaskToPBTask(task),
+	}, nil
 }
 
 func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskpbv1.DeleteTaskRequest) (*taskpbv1.DeleteTaskResponse, error) {
@@ -109,4 +140,14 @@ func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskp
 	}
 
 	return &taskpbv1.DeleteTaskResponse{}, nil
+}
+
+func (s *TaskServiceServer) AssignExecutor(ctx context.Context, request *taskpbv1.AssignExecutorRequest) (*taskpbv1.AssignExecutorResponse, error) {
+
+	return &taskpbv1.AssignExecutorResponse{}, nil
+}
+
+func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.SetStatusRequest) (*taskpbv1.SetStatusResponse, error) {
+
+	return &taskpbv1.SetStatusResponse{}, nil
 }

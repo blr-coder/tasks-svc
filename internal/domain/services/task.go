@@ -15,7 +15,7 @@ type ITaskService interface {
 	Get(ctx context.Context, taskID int64) (*models.Task, error)
 	List(ctx context.Context, filter *models.TasksFilter) ([]*models.Task, error)
 	Count(ctx context.Context, filter *models.TasksFilter) (uint64, error)
-	Update(ctx context.Context, input *models.UpdateTask) error
+	Update(ctx context.Context, input *models.UpdateTask) (*models.Task, error)
 	Delete(ctx context.Context, taskID int64) error
 
 	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
@@ -69,12 +69,12 @@ func (ts *TaskService) Count(ctx context.Context, filter *models.TasksFilter) (u
 	return ts.taskStorage.Count(ctx, filter)
 }
 
-func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) error {
+func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*models.Task, error) {
 	log.Println("update in TaskService")
 
 	task, err := ts.taskStorage.Get(ctx, input.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// TODO: Check status. Cannot update a task with the status DONE - task.IsUpdatePossible()
@@ -84,15 +84,15 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) err
 
 	updatedTask, err := ts.taskStorage.Update(ctx, task)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = ts.eventSender.SendTaskUpdated(ctx, updatedTask)
 	if err != nil {
-		return fmt.Errorf("sending event err, %w", err)
+		return nil, fmt.Errorf("sending event err, %w", err)
 	}
 
-	return nil
+	return updatedTask, nil
 }
 
 func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
