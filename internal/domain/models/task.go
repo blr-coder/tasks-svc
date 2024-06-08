@@ -30,11 +30,11 @@ type CreateTask struct {
 
 type UpdateTask struct {
 	ID          int64
-	Title       string
-	Description string
-	CustomerID  uuid.UUID
+	Title       *string
+	Description *string
+	CustomerID  *uuid.UUID
 	ExecutorID  *uuid.UUID
-	Status      TaskStatus
+	Status      *TaskStatus
 }
 
 type TasksFilter struct {

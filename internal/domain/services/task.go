@@ -6,7 +6,6 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
-	"github.com/google/uuid"
 	"log"
 )
 
@@ -18,9 +17,7 @@ type ITaskService interface {
 	Update(ctx context.Context, input *models.UpdateTask) (*models.Task, error)
 	Delete(ctx context.Context, taskID int64) error
 
-	AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error
 	AssignRandomExecutor(ctx context.Context, taskId int64) error
-	SetStatus(ctx context.Context, taskID int64, status models.TaskStatus) error
 }
 
 type TaskService struct {
@@ -79,8 +76,21 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*m
 
 	// TODO: Check status. Cannot update a task with the status DONE - task.IsUpdatePossible()
 
-	task.Title = input.Title
-	task.Description = input.Description
+	if input.Title != nil {
+		task.Title = *input.Title
+	}
+
+	if input.Description != nil {
+		task.Description = *input.Description
+	}
+
+	if input.CustomerID != nil {
+		task.CustomerID = *input.CustomerID
+	}
+
+	if input.ExecutorID != nil {
+		task.ExecutorID = input.ExecutorID
+	}
 
 	updatedTask, err := ts.taskStorage.Update(ctx, task)
 	if err != nil {
@@ -111,18 +121,8 @@ func (ts *TaskService) Delete(ctx context.Context, taskID int64) error {
 	return nil
 }
 
-func (ts *TaskService) AssignExecutor(ctx context.Context, taskID int64, executorID uuid.UUID) error {
-
-	return nil
-}
-
 func (ts *TaskService) AssignRandomExecutor(ctx context.Context, taskId int64) error {
 	// TODO: Go to user/auth svc for getting random executor
-
-	return nil
-}
-
-func (ts *TaskService) SetStatus(ctx context.Context, taskID int64, status models.TaskStatus) error {
 
 	return nil
 }

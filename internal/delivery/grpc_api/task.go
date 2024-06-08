@@ -5,6 +5,7 @@ import (
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
+	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
 	"log"
@@ -95,34 +96,45 @@ func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpb
 func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
 	log.Println("update")
 
-	if err := s.Validator.Validate(updateRequest); err != nil {
+	var (
+		customerID, executorID uuid.UUID
+		err                    error
+		updateTask             = &models.UpdateTask{
+			ID: updateRequest.GetTaskId(),
+		}
+	)
+
+	if err = s.Validator.Validate(updateRequest); err != nil {
 		return nil, err
 	}
 
-	customerID, err := uuid.Parse(updateRequest.GetCustomerId())
-	if err != nil {
-		return nil, err
-	}
-
-	var executorID *uuid.UUID
-
-	if updateRequest.GetExecutorId() != nil {
-		eID, err := uuid.Parse(updateRequest.GetExecutorId().GetValue())
+	if updateRequest.GetCustomerId() != nil {
+		customerID, err = uuid.Parse(updateRequest.GetCustomerId().GetValue())
 		if err != nil {
 			return nil, err
 		}
 
-		executorID = &eID
+		updateTask.CustomerID = &customerID
 	}
 
-	task, err := s.taskService.Update(ctx, &models.UpdateTask{
-		ID:          updateRequest.GetTaskId(),
-		Title:       updateRequest.GetTitle(),
-		Description: updateRequest.GetDescription(),
-		CustomerID:  customerID,
-		ExecutorID:  executorID,
-		Status:      PbTaskStatusToDomain(updateRequest.GetStatus()),
-	})
+	if updateRequest.GetExecutorId() != nil {
+		executorID, err = uuid.Parse(updateRequest.GetExecutorId().GetValue())
+		if err != nil {
+			return nil, err
+		}
+
+		updateTask.ExecutorID = utils.Pointer(executorID)
+	}
+
+	if updateRequest.GetTitle() != nil {
+		updateTask.Title = utils.Pointer(updateRequest.GetTitle().GetValue())
+	}
+
+	if updateRequest.GetDescription() != nil {
+		updateTask.Description = utils.Pointer(updateRequest.GetDescription().GetValue())
+	}
+
+	task, err := s.taskService.Update(ctx, updateTask)
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +160,33 @@ func (s *TaskServiceServer) AssignExecutor(ctx context.Context, request *taskpbv
 }
 
 func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.SetStatusRequest) (*taskpbv1.SetStatusResponse, error) {
+	log.Println("SetStatus")
+
+	if err := s.Validator.Validate(request); err != nil {
+		return nil, err
+	}
+
+	_, err := s.taskService.Update(ctx, &models.UpdateTask{
+		ID:     request.GetTaskId(),
+		Status: utils.Pointer(PbTaskStatusToDomain(request.GetStatus())),
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &taskpbv1.SetStatusResponse{}, nil
+}
+
+func (s *TaskServiceServer) AssignRandomExecutor(ctx context.Context, request *taskpbv1.AssignRandomExecutorRequest) (*taskpbv1.AssignRandomExecutorResponse, error) {
+	log.Println("AssignRandomExecutor")
+
+	if err := s.Validator.Validate(request); err != nil {
+		return nil, err
+	}
+
+	if err := s.taskService.AssignRandomExecutor(ctx, request.GetTaskId()); err != nil {
+		return nil, err
+	}
+
+	return &taskpbv1.AssignRandomExecutorResponse{}, nil
 }
