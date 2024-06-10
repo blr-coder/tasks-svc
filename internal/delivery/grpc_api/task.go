@@ -8,6 +8,8 @@ import (
 	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 )
 
@@ -28,12 +30,12 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 	log.Println("create in TaskServiceServer")
 
 	if err := s.Validator.Validate(createRequest); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	customerID, err := uuid.Parse(createRequest.GetCustomerId())
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var executorID *uuid.UUID
@@ -41,7 +43,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 	if createRequest.GetExecutorId() != nil {
 		eID, err := uuid.Parse(createRequest.GetExecutorId().GetValue())
 		if err != nil {
-			return nil, err
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		executorID = &eID
@@ -54,7 +56,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		ExecutorID:  executorID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &taskpbv1.CreateTaskResponse{
@@ -67,6 +69,7 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 
 	task, err := s.taskService.Get(ctx, getRequest.GetTaskId())
 	if err != nil {
+		// TODO: Check domain errors. If err is NotFoundError - return nil, status.Error(codes.NotFound, err.Error())
 		return nil, err
 	}
 

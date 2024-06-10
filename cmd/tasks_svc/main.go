@@ -11,7 +11,6 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/jmoiron/sqlx"
 	"log"
-	"net"
 	"os/signal"
 	"syscall"
 )
@@ -83,13 +82,8 @@ func runApp() error {
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", appConfig.AppPort))
-	if err != nil {
-		return err
-	}
-
 	go func() {
-		err = grpcServer.GRPCServer.Serve(listener)
+		err = grpcServer.Run(appConfig.AppPort)
 		if err != nil {
 			cancel()
 			return
