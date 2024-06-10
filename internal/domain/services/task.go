@@ -74,8 +74,6 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*m
 		return nil, err
 	}
 
-	// TODO: Check status. Cannot update a task with the status DONE - task.IsUpdatePossible()
-
 	if input.Title != nil {
 		task.Title = *input.Title
 	}
@@ -90,6 +88,11 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*m
 
 	if input.ExecutorID != nil {
 		task.ExecutorID = input.ExecutorID
+	}
+
+	// TODO: Check status. Cannot update a task with the status DONE - task.IsUpdatePossible()
+	if input.Status != nil {
+		task.Status = *input.Status
 	}
 
 	updatedTask, err := ts.taskStorage.Update(ctx, task)

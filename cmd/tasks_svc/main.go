@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
@@ -11,6 +12,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -22,6 +25,11 @@ func main() {
 
 func runApp() error {
 	log.Println("ASYNC")
+
+	ctx := context.Background()
+
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
 
 	appConfig, err := config.NewAppConfig()
 	if err != nil {
@@ -80,5 +88,19 @@ func runApp() error {
 		return err
 	}
 
-	return grpcServer.Serve(listener)
+	go func() {
+		err = grpcServer.GRPCServer.Serve(listener)
+		if err != nil {
+			cancel()
+			return
+		}
+	}()
+
+	// Graceful shutdown
+	<-ctx.Done()
+
+	grpcServer.GRPCServer.GracefulStop()
+	log.Println("\nGracefully stopped")
+
+	return err
 }

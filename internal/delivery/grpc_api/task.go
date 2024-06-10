@@ -134,6 +134,10 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.Description = utils.Pointer(updateRequest.GetDescription().GetValue())
 	}
 
+	if updateRequest.GetStatus() != taskpbv1.TaskStatus_TASK_STATUS_UNSPECIFIED {
+		updateTask.Status = utils.Pointer(PbTaskStatusToDomain(updateRequest.GetStatus()))
+	}
+
 	task, err := s.taskService.Update(ctx, updateTask)
 	if err != nil {
 		return nil, err
