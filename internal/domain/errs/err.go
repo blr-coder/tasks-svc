@@ -34,9 +34,15 @@ func (e *DomainError) WithParams(params map[string]string) *DomainError {
 	return e
 }
 
-func NewDomainNotFoundError() *DomainError {
-	return &DomainError{
-		Message: fmt.Sprintf("Record not found"),
-		Params:  map[string]string{},
+type DomainNotFoundError struct {
+	*DomainError
+}
+
+func NewDomainNotFoundError() *DomainNotFoundError {
+	return &DomainNotFoundError{
+		DomainError: &DomainError{
+			Message: fmt.Sprintf("Record not found"),
+			Params:  map[string]string{},
+		},
 	}
 }

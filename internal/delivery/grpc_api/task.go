@@ -143,7 +143,7 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 
 	task, err := s.taskService.Update(ctx, updateTask)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &taskpbv1.UpdateTaskResponse{
@@ -178,6 +178,7 @@ func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.Set
 		Status: utils.Pointer(PbTaskStatusToDomain(request.GetStatus())),
 	})
 	if err != nil {
+		// TODO: Add check for domainError - IsUpdatePossible
 		return nil, err
 	}
 
