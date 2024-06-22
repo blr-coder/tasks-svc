@@ -9,7 +9,7 @@ import (
 )
 
 func TestTaskPsqlStorage_Get(t *testing.T) {
-	testDB := NewTaskPsqlStorage(NewTestPsqlDB())
+	testDB := NewTaskPsqlStorage(dbConnTest)
 
 	testCases := []struct {
 		name    string
