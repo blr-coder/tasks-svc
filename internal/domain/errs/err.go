@@ -1,27 +1,33 @@
 package errs
 
-import "fmt"
-
-/*type DomainError interface {
-	Code() string
-	Message() string
-	Error() string
-}*/
+import (
+	"errors"
+	"fmt"
+	"reflect"
+)
 
 type DomainError struct {
-	Message string            `json:"message"`
-	Params  map[string]string `json:"params"`
+	Message string `json:"message"`
+	Params  Params `json:"params"`
+}
+
+type Params map[string]string
+
+func (e *DomainError) Error() string {
+	return fmt.Sprintf("%s. Params: %v", e.Message, e.Params)
+}
+
+func (e *DomainError) Is(tgt error) bool {
+	var target *DomainError
+	if !errors.As(tgt, &target) {
+		return false
+	}
+	return reflect.DeepEqual(e, target)
 }
 
 func (e *DomainError) AddParam(key string, value string) {
 	e.Params[key] = value
 }
-
-func (e *DomainError) Error() string {
-	return e.Message
-}
-
-//type Params map[string]string
 
 func (e *DomainError) WithParam(key, value string) *DomainError {
 	e.AddParam(key, value)
@@ -38,11 +44,9 @@ type DomainNotFoundError struct {
 	*DomainError
 }
 
-func NewDomainNotFoundError() *DomainNotFoundError {
-	return &DomainNotFoundError{
-		DomainError: &DomainError{
-			Message: fmt.Sprintf("Record not found"),
-			Params:  map[string]string{},
-		},
+func NewDomainNotFoundError() *DomainError {
+	return &DomainError{
+		Message: fmt.Sprintf("Record not found"),
+		Params:  map[string]string{},
 	}
 }

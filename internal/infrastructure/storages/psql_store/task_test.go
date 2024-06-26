@@ -62,9 +62,22 @@ func TestTaskPsqlStorage_Get(t *testing.T) {
 				t.Errorf("Get() error = %v, wantErr %v", err, testCase.wantErr)
 				return
 			}
-			require.Equal(t, got.ID, testCase.taskID)
-			// TODO: requireTasksEqual()
+
+			requireTasksEqual(t, got, testCase.want)
 		})
+	}
+}
+
+func requireTasksEqual(t *testing.T, got, want *models.Task) {
+	if got != nil && want != nil {
+		require.Equal(t, want.ID, got.ID)
+		require.Equal(t, want.Title, got.Title)
+		require.Equal(t, want.Description, got.Description)
+		require.Equal(t, want.CustomerID, got.CustomerID)
+		require.Equal(t, want.ExecutorID, got.ExecutorID)
+		require.Equal(t, want.Status, got.Status)
+		require.NotZero(t, got.CreatedAt)
+		require.NotZero(t, got.UpdatedAt)
 	}
 }
 
