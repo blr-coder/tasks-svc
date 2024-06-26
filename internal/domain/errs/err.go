@@ -9,8 +9,8 @@ import "fmt"
 }*/
 
 type DomainError struct {
-	Message string `json:"message"`
-	Params  Params `json:"params"`
+	Message string            `json:"message"`
+	Params  map[string]string `json:"params"`
 }
 
 func (e *DomainError) AddParam(key string, value string) {
@@ -21,7 +21,7 @@ func (e *DomainError) Error() string {
 	return e.Message
 }
 
-type Params map[string]string
+//type Params map[string]string
 
 func (e *DomainError) WithParam(key, value string) *DomainError {
 	e.AddParam(key, value)

@@ -74,9 +74,10 @@ func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, 
 	err := s.db.GetContext(ctx, task, query, taskID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			e := errs.NewDomainNotFoundError()
-			return nil, fmt.Errorf("data not found: %w", e.WithParam("task_id", fmt.Sprint(taskID)))
+			return nil, errs.NewDomainNotFoundError().WithParam("task_id", fmt.Sprint(taskID))
 		}
+
+		return nil, err
 	}
 
 	return task, nil

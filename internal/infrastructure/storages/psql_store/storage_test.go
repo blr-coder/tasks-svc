@@ -29,7 +29,11 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	MustRunPostgresTest(m, "../psql_store/migrations", func(conn *sqlx.DB) {
+	// Run docker container for storage testing
+	dockerForTest := MustDockerForStorageTest()
+
+	//
+	MustRunPsqlStorageTest(m, dockerForTest, "../psql_store/migrations", func(conn *sqlx.DB) {
 		dbConnTest = conn
 
 		cleanup()
@@ -40,16 +44,16 @@ func cleanup() {
 	dbConnTest.MustExec("DELETE FROM tasks")
 }
 
-func MustRunPostgresTest(m *testing.M, pathToMigrations string, prepareFunc func(conn *sqlx.DB)) {
+func MustRunPsqlStorageTest(m *testing.M, dockerForTest *DockerForStorageTests, pathToMigrations string, prepareFunc func(conn *sqlx.DB)) {
 	_, filename, _, _ := runtime.Caller(0)
 	migrationDir, err := filepath.Abs(filepath.Join(path.Dir(filename), pathToMigrations))
 	if err != nil {
 		log.Fatalf("could not get migrations dir: %s", err.Error())
 	}
 
-	dt := MustDockertest()
+	//dockerForTest := MustDockerForStorageTest()
 
-	conn, err := dt.Postgres(migrationDir)
+	conn, err := dockerForTest.GetPostgresConn(migrationDir)
 	if err != nil {
 		log.Fatalf("failed to run postgres container: %s", err.Error())
 	}
@@ -57,28 +61,28 @@ func MustRunPostgresTest(m *testing.M, pathToMigrations string, prepareFunc func
 	prepareFunc(conn)
 
 	code := m.Run()
-	dt.Purge()
+	dockerForTest.Purge()
 	os.Exit(code)
 }
 
-type Dockertest struct {
+type DockerForStorageTests struct {
 	pool *dockertest.Pool
 
 	postgres *postgresDB
 }
 
-func (dt *Dockertest) Postgres(migrationsDir string) (*sqlx.DB, error) {
+func (dt *DockerForStorageTests) GetPostgresConn(migrationsDir string) (*sqlx.DB, error) {
 	dt.postgres = &postgresDB{
 		migrationsDir: migrationsDir,
 	}
 
-	if err := dt.postgres.up(dt.pool); err != nil {
+	if err := dt.postgres.runAndUpMigrations(dt.pool); err != nil {
 		return nil, err
 	}
 	return dt.postgres.conn, nil
 }
 
-func (dt *Dockertest) Purge() error {
+func (dt *DockerForStorageTests) Purge() error {
 	if dt.postgres != nil {
 		if err := dt.pool.Purge(dt.postgres.resource); err != nil {
 			return fmt.Errorf("could not purge postgres resource: %s", err)
@@ -87,13 +91,13 @@ func (dt *Dockertest) Purge() error {
 	return nil
 }
 
-func MustDockertest() *Dockertest {
+func MustDockerForStorageTest() *DockerForStorageTests {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("could not connect to docker pool: %s", err)
 	}
 
-	return &Dockertest{
+	return &DockerForStorageTests{
 		pool: pool,
 	}
 }
@@ -106,7 +110,7 @@ type postgresDB struct {
 	databaseURL   string
 }
 
-func (p *postgresDB) up(pool *dockertest.Pool) error {
+func (p *postgresDB) runAndUpMigrations(pool *dockertest.Pool) error {
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
