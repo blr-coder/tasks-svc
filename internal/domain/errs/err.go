@@ -50,3 +50,10 @@ func NewDomainNotFoundError() *DomainError {
 		Params:  map[string]string{},
 	}
 }
+
+func NewDomainDuplicateError() *DomainError {
+	return &DomainError{
+		Message: fmt.Sprintf("Record already exist"),
+		Params:  map[string]string{},
+	}
+}

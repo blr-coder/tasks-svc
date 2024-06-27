@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/errs"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/lib/pq"
 	"log"
 
 	// DB driver
@@ -54,6 +55,14 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 		models.PendingStatus,
 	)
 	if err != nil {
+		// TODO: handlePostgresError
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				// Это ошибка дублирования ключа
+				return nil, errs.NewDomainDuplicateError().WithParam("create_task", fmt.Sprint(createTask))
+			}
+		}
+
 		return nil, fmt.Errorf("create task in storage err: %w", err)
 	}
 
