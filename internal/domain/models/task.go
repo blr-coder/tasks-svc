@@ -13,6 +13,8 @@ type Task struct {
 	CustomerID  uuid.UUID  `json:"customer_id" db:"customer_id"`
 	ExecutorID  *uuid.UUID `json:"executor_id" db:"executor_id"`
 	Status      TaskStatus `json:"status" db:"status"`
+	IsActive    bool       `json:"is_active" db:"is_active"`
+	Currency    *Currency  `json:"currency" db:"currency"`
 	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
 }
@@ -26,6 +28,7 @@ type CreateTask struct {
 	Description string
 	CustomerID  uuid.UUID
 	ExecutorID  *uuid.UUID
+	Currency    *Currency
 }
 
 type UpdateTask struct {
@@ -35,12 +38,14 @@ type UpdateTask struct {
 	CustomerID  *uuid.UUID
 	ExecutorID  *uuid.UUID
 	Status      *TaskStatus
+	Currency    *Currency
 }
 
 type TasksFilter struct {
 	CustomerID uuid.UUID
 	ExecutorID uuid.UUID
 	Status     TaskStatus
+	Currency   *Currency
 	Search     string
 	Sorting    Sorting
 	Limiting   Limiting

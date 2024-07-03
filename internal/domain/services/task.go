@@ -39,6 +39,8 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 		return 0, fmt.Errorf("create new task err, %w", err)
 	}
 
+	// TODO: CheckCurrency() if currency != EUR
+
 	err = ts.eventSender.SendTaskCreated(ctx, task)
 	if err != nil {
 		return 0, fmt.Errorf("sending event err, %w", err)
