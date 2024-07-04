@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
@@ -29,6 +30,7 @@ func NewTaskServiceServer(validator *protovalidate.Validator, taskService servic
 func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
 	log.Println("create in TaskServiceServer")
 
+	// TODO: Add s.validate(r *taskpbv1.CreateTaskRequest) func, for validation createRequest
 	if err := s.Validator.Validate(createRequest); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -38,7 +40,11 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var executorID *uuid.UUID
+	var (
+		executorID     *uuid.UUID
+		domainCurrency *models.Currency
+		amount         *float64
+	)
 
 	if createRequest.GetExecutorId() != nil {
 		eID, err := uuid.Parse(createRequest.GetExecutorId().GetValue())
@@ -49,11 +55,23 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		executorID = &eID
 	}
 
+	if createRequest.GetPrice() != nil {
+		currency, err := ProtoCurrencyToDomainCurrency(createRequest.GetPrice().GetCurrency())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		amount = utils.Pointer(createRequest.GetPrice().GetAmount())
+		domainCurrency = utils.Pointer(currency)
+	}
+
 	newId, err := s.taskService.Create(ctx, &models.CreateTask{
 		Title:       createRequest.GetTitle(),
 		Description: createRequest.GetDescription(),
 		CustomerID:  customerID,
 		ExecutorID:  executorID,
+		Amount:      amount,
+		Currency:    domainCurrency,
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -62,6 +80,22 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 	return &taskpbv1.CreateTaskResponse{
 		NewTaskId: newId,
 	}, nil
+}
+
+func ProtoCurrencyToDomainCurrency(pbCurrency string) (currency models.Currency, err error) {
+	// TODO: Add ENUM to PROTO or another solution
+	switch pbCurrency {
+	case "EUR":
+		currency = models.CurrencyEUR
+	case "USD":
+		currency = models.CurrencyUSD
+	case "PLN":
+		currency = models.CurrencyPLN
+	default:
+		return "", fmt.Errorf("unknown currency, %s", pbCurrency)
+	}
+
+	return currency, nil
 }
 
 func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
@@ -139,6 +173,16 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 
 	if updateRequest.GetStatus() != taskpbv1.TaskStatus_TASK_STATUS_UNSPECIFIED {
 		updateTask.Status = utils.Pointer(PbTaskStatusToDomain(updateRequest.GetStatus()))
+	}
+
+	if updateRequest.Price != nil {
+		currency, err := ProtoCurrencyToDomainCurrency(updateRequest.GetPrice().GetCurrency())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		updateTask.Currency = utils.Pointer(currency)
+		updateTask.Amount = utils.Pointer(updateRequest.GetPrice().GetAmount())
 	}
 
 	task, err := s.taskService.Update(ctx, updateTask)

@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/IBM/sarama v1.43.0
-	github.com/blr-coder/task-proto v0.0.0-20240608164259-bf45935a5f52
+	github.com/blr-coder/task-proto v0.0.0-20240704214137-a4c79aba11bc
 	github.com/blr-coder/task_system_schemas_registry v0.0.0-20240424153741-68b444c5f921
 	github.com/bufbuild/protovalidate-go v0.6.0
 	github.com/davecgh/go-spew v1.1.1

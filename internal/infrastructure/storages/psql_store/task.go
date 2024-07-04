@@ -37,9 +37,9 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 
 	query := `
 		INSERT INTO tasks 
-		    (title, description, customer_id, executor_id, status)
+		    (title, description, customer_id, executor_id, status, currency, amount)
 		VALUES 
-		    ($1, $2, $3, $4, $5)
+		    ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING *`
 
 	task := &models.Task{}
@@ -53,6 +53,8 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 		createTask.CustomerID,
 		createTask.ExecutorID,
 		models.PendingStatus,
+		createTask.Currency,
+		createTask.Amount,
 	)
 	if err != nil {
 		// TODO: handlePostgresError
@@ -131,7 +133,10 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
                  	customer_id=$4,
                  	executor_id=$5,
                  	status=$6,
-                 	updated_at=CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
+                 	updated_at=CURRENT_TIMESTAMP AT TIME ZONE 'UTC',
+                 	is_active=$7,
+                 	amount=$8,
+                 	currency=$9
              WHERE id=$1 RETURNING *`
 
 		updatedTask = &models.Task{}
@@ -146,6 +151,9 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
 		input.CustomerID,
 		input.ExecutorID,
 		input.Status,
+		input.IsActive,
+		input.Amount,
+		input.Currency,
 	).StructScan(updatedTask); err != nil {
 		return nil, fmt.Errorf("updating task in DB error: %w", err)
 	}

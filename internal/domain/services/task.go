@@ -98,6 +98,14 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*m
 		task.Status = *input.Status
 	}
 
+	if input.Amount != nil {
+		task.Amount = input.Amount
+	}
+
+	if input.Currency != nil {
+		task.Currency = input.Currency
+	}
+
 	updatedTask, err := ts.taskStorage.Update(ctx, task)
 	if err != nil {
 		return nil, err

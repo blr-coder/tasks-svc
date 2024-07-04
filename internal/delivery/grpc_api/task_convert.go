@@ -3,6 +3,7 @@ package grpc
 import (
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -47,15 +48,29 @@ func domainTasksToPBTasks(domainTasks []*models.Task) []*taskpbv1.Task {
 }
 
 func domainTaskToPBTask(task *models.Task) *taskpbv1.Task {
-	return &taskpbv1.Task{
+	t := &taskpbv1.Task{
 		Id:          task.ID,
 		Title:       task.Title,
 		Description: task.Description,
 		CustomerId:  task.CustomerID.String(),
-		ExecutorId:  task.ExecutorID.String(),
 		Status:      DomainTaskStatusToPB(task.Status),
 		CreatedAt:   timestamppb.New(task.CreatedAt),
 		UpdatedAt:   timestamppb.New(task.UpdatedAt),
-		IsActive:    true,
+		IsActive:    task.IsActive,
+		Price:       &taskpbv1.Price{},
 	}
+
+	if task.ExecutorID != nil {
+		t.ExecutorId = task.ExecutorID.String()
+	}
+
+	if task.Currency != nil {
+		t.Price.Currency = task.Currency.String()
+	}
+
+	if task.Amount != nil {
+		t.Price.Amount = utils.Value(task.Amount)
+	}
+
+	return t
 }
