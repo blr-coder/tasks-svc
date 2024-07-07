@@ -185,6 +185,10 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.Amount = utils.Pointer(updateRequest.GetPrice().GetAmount())
 	}
 
+	if updateRequest.IsActive != nil {
+		updateTask.IsActive = utils.Pointer(updateRequest.IsActive.Value)
+	}
+
 	task, err := s.taskService.Update(ctx, updateTask)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

@@ -42,6 +42,7 @@ type UpdateTask struct {
 	Status      *TaskStatus
 	Currency    *Currency
 	Amount      *float64
+	IsActive    *bool
 }
 
 type TasksFilter struct {

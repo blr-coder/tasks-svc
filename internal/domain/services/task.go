@@ -6,6 +6,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
+	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"log"
 )
 
@@ -104,6 +105,10 @@ func (ts *TaskService) Update(ctx context.Context, input *models.UpdateTask) (*m
 
 	if input.Currency != nil {
 		task.Currency = input.Currency
+	}
+
+	if input.IsActive != nil {
+		task.IsActive = utils.Value(input.IsActive)
 	}
 
 	updatedTask, err := ts.taskStorage.Update(ctx, task)

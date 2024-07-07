@@ -8,6 +8,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/config"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
+	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
@@ -176,21 +177,25 @@ func domainTaskStatusToPB(domainStatus models.TaskStatus) (pbStatus taskschemasr
 }
 
 func domainTaskToPB(task *models.Task) *taskschemasregistry.TaskV1 {
-	var eID string
+	/*var (
+		eID string
+	)*/
 
-	if task.ExecutorID != nil {
+	/*if task.ExecutorID != nil {
 		eID = task.ExecutorID.String()
-	}
+	}*/
 
 	return &taskschemasregistry.TaskV1{
 		Id:          task.ID,
 		Title:       task.Title,
 		Description: task.Description,
 		CustomerId:  task.CustomerID.String(),
-		ExecutorId:  eID,
+		ExecutorId:  utils.Value(task.ExecutorID).String(),
 		Status:      domainTaskStatusToPB(task.Status),
 		CreatedAt:   timestamppb.New(task.CreatedAt),
 		UpdatedAt:   timestamppb.New(task.UpdatedAt),
-		// TODO: Add isActive and Price
+		Currency:    utils.Value(task.Currency).String(),
+		Amount:      utils.Value(task.Amount),
+		IsActive:    task.IsActive,
 	}
 }

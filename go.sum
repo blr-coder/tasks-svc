@@ -21,6 +21,8 @@ github.com/blr-coder/task-proto v0.0.0-20240704214137-a4c79aba11bc h1:44icTYdHgF
 github.com/blr-coder/task-proto v0.0.0-20240704214137-a4c79aba11bc/go.mod h1:NUNNcMe1/+/svA31SP2ZjuAoOYSZgcOlJiNT6pC9NxU=
 github.com/blr-coder/task_system_schemas_registry v0.0.0-20240424153741-68b444c5f921 h1:/W3SNqkaXTcknmnnDFpNS06sgOhnvVdm9eM/NJbrmUE=
 github.com/blr-coder/task_system_schemas_registry v0.0.0-20240424153741-68b444c5f921/go.mod h1:3kQF9XkqZdEBN55xvXVZvyKOxQmscFwKvMh4akzEcao=
+github.com/blr-coder/task_system_schemas_registry v0.0.0-20240707112138-6cfbb76a30ce h1:UHfbR6NY1hOHS/5gT34qITwYa8uSZELjn0JTvlVZm9I=
+github.com/blr-coder/task_system_schemas_registry v0.0.0-20240707112138-6cfbb76a30ce/go.mod h1:3kQF9XkqZdEBN55xvXVZvyKOxQmscFwKvMh4akzEcao=
 github.com/bufbuild/protovalidate-go v0.6.0 h1:Jgs1kFuZ2LHvvdj8SpCLA1W/+pXS8QSM3F/E2l3InPY=
 github.com/bufbuild/protovalidate-go v0.6.0/go.mod h1:1LamgoYHZ2NdIQH0XGczGTc6Z8YrTHjcJVmiBaar4t4=
 github.com/cenkalti/backoff/v4 v4.1.3 h1:cFAlzYUlVYDysBEH2T5hyJZMh3+5+WCBvSnK6Q8UtC4=

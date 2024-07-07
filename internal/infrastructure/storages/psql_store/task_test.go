@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/errs"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -33,6 +34,9 @@ func TestTaskPsqlStorage_Get(t *testing.T) {
 				CustomerID:  uuid.UUID([]byte(testUUID)),
 				ExecutorID:  nil,
 				Status:      models.PendingStatus,
+				IsActive:    true,
+				Currency:    utils.Pointer(models.CurrencyPLN),
+				Amount:      utils.Pointer(500.33),
 				CreatedAt:   time.Time{},
 				UpdatedAt:   time.Time{},
 			},
@@ -87,6 +91,8 @@ func addTestsTasks(t *testing.T, s *TaskPsqlStorage) {
 		Description: "First test task description",
 		CustomerID:  uuid.UUID([]byte(testUUID)),
 		ExecutorID:  nil,
+		Currency:    utils.Pointer(models.CurrencyPLN),
+		Amount:      utils.Pointer(500.33),
 	})
 	require.NoError(t, err)
 
@@ -128,6 +134,11 @@ func TestTaskPsqlStorage_Create(t *testing.T) {
 				CustomerID:  uuid.UUID([]byte(testUUID)),
 				ExecutorID:  nil,
 				Status:      models.PendingStatus,
+				IsActive:    true,
+				Currency:    nil,
+				Amount:      nil,
+				CreatedAt:   time.Time{},
+				UpdatedAt:   time.Time{},
 			},
 			wantErr: nil,
 		},

@@ -51,8 +51,6 @@ func MustRunPsqlStorageTest(m *testing.M, dockerForTest *DockerForStorageTests, 
 		log.Fatalf("could not get migrations dir: %s", err.Error())
 	}
 
-	//dockerForTest := MustDockerForStorageTest()
-
 	conn, err := dockerForTest.GetPostgresConn(migrationDir)
 	if err != nil {
 		log.Fatalf("failed to run postgres container: %s", err.Error())
@@ -161,24 +159,6 @@ func (p *postgresDB) runAndUpMigrations(pool *dockertest.Pool) error {
 
 	return p.migrateUp()
 }
-
-/*func (p *postgres) migrate() error {
-	m, err := migrate.NewWithSourceInstance(
-		p.migrationsDir,
-		p.conn,
-	)
-	if err != nil {
-		return fmt.Errorf("could not apply migrations: %w", err)
-	}
-
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("error when migration up: %v", err)
-	}
-
-	log.Println("migration completed!")
-
-	return nil
-}*/
 
 func (p *postgresDB) migrateUp() error {
 	// Настройка драйвера PostgreSQL
