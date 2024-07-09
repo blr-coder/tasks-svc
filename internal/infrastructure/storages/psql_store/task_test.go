@@ -58,7 +58,7 @@ func TestTaskPsqlStorage_Get(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cleanupTasks(t)
+			resetTasksTable(t)
 			addTestsTasks(t, testDB)
 
 			got, err := testDB.Get(context.Background(), testCase.taskID)
@@ -105,8 +105,8 @@ func addTestsTasks(t *testing.T, s *TaskPsqlStorage) {
 	require.NoError(t, err)
 }
 
-func cleanupTasks(t *testing.T) {
-	_, err := dbConnTest.Exec("TRUNCATE TABLE tasks CASCADE")
+func resetTasksTable(t *testing.T) {
+	_, err := dbConnTest.Exec("TRUNCATE TABLE tasks RESTART IDENTITY CASCADE")
 	require.NoError(t, err)
 }
 
@@ -162,7 +162,7 @@ func TestTaskPsqlStorage_Create(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cleanupTasks(t)
+			resetTasksTable(t)
 			addTestsTasks(t, testDB)
 
 			got, err := testDB.Create(context.Background(), testCase.createTask)
@@ -172,6 +172,160 @@ func TestTaskPsqlStorage_Create(t *testing.T) {
 			}
 
 			requireTasksEqual(t, got, testCase.want)
+		})
+	}
+}
+
+func TestTaskPsqlStorage_Update(t *testing.T) {
+	testDB := NewTaskPsqlStorage(dbConnTest)
+
+	testCases := []struct {
+		name       string
+		updateTask *models.Task
+		want       *models.Task
+		wantErr    error
+	}{
+		{
+			name: "ok",
+			updateTask: &models.Task{
+				ID:          1,
+				Title:       "First test task title UPDATED",
+				Description: "First test task description UPDATED",
+				CustomerID:  uuid.UUID([]byte(testUUID)),
+				ExecutorID:  utils.Pointer(uuid.UUID([]byte(testUUID))),
+				Status:      models.ProcessingStatus,
+				IsActive:    false,
+				Currency:    utils.Pointer(models.CurrencyEUR),
+				Amount:      utils.Pointer(222.33),
+			},
+			want: &models.Task{
+				ID:          1,
+				Title:       "First test task title UPDATED",
+				Description: "First test task description UPDATED",
+				CustomerID:  uuid.UUID([]byte(testUUID)),
+				ExecutorID:  utils.Pointer(uuid.UUID([]byte(testUUID))),
+				Status:      models.ProcessingStatus,
+				IsActive:    false,
+				Currency:    utils.Pointer(models.CurrencyEUR),
+				Amount:      utils.Pointer(222.33),
+				CreatedAt:   time.Time{},
+				UpdatedAt:   time.Time{},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "not found err",
+			updateTask: &models.Task{
+				ID:          999,
+				Title:       "First test task title UPDATED",
+				Description: "First test task description UPDATED",
+				CustomerID:  uuid.UUID([]byte(testUUID)),
+				ExecutorID:  utils.Pointer(uuid.UUID([]byte(testUUID))),
+				Status:      models.ProcessingStatus,
+			},
+			want:    nil,
+			wantErr: errs.NewDomainNotFoundError().WithParam("task_id", fmt.Sprint(999)),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			resetTasksTable(t)
+			addTestsTasks(t, testDB)
+
+			got, err := testDB.Update(context.Background(), testCase.updateTask)
+			if !errors.Is(err, testCase.wantErr) {
+				t.Errorf("Update() error = %v, wantErr %v", err, testCase.wantErr)
+				return
+			}
+
+			requireTasksEqual(t, got, testCase.want)
+		})
+	}
+}
+
+func TestTaskPsqlStorage_List(t *testing.T) {
+	testDB := NewTaskPsqlStorage(dbConnTest)
+
+	testCases := []struct {
+		name    string
+		filter  *models.TasksFilter
+		want    []*models.Task
+		wantErr error
+	}{
+		{
+			name:   "ok without filters",
+			filter: &models.TasksFilter{},
+			want: []*models.Task{
+				{
+					ID:          1,
+					Title:       "First test task title",
+					Description: "First test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    true,
+					Currency:    utils.Pointer(models.CurrencyPLN),
+					Amount:      utils.Pointer(500.33),
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
+				{
+					ID:          2,
+					Title:       "Second test task title",
+					Description: "Second test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    true,
+					Currency:    nil,
+					Amount:      nil,
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok list by currency",
+			filter: &models.TasksFilter{
+				Currency: utils.Pointer(models.CurrencyPLN),
+			},
+			want: []*models.Task{
+				{
+					ID:          1,
+					Title:       "First test task title",
+					Description: "First test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    true,
+					Currency:    utils.Pointer(models.CurrencyPLN),
+					Amount:      utils.Pointer(500.33),
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			resetTasksTable(t)
+			addTestsTasks(t, testDB)
+
+			got, err := testDB.List(context.Background(), testCase.filter)
+			if !errors.Is(err, testCase.wantErr) {
+				t.Errorf("List() error = %v, wantErr %v", err, testCase.wantErr)
+				return
+			}
+
+			require.Len(t, got, len(testCase.want))
+
+			for idx := range testCase.want {
+				requireTasksEqual(t, got[idx], testCase.want[idx])
+			}
 		})
 	}
 }

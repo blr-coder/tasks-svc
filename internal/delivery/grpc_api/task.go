@@ -113,7 +113,31 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 }
 
 func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
-	domainTasks, err := s.taskService.List(ctx, &models.TasksFilter{})
+	// TODO: Add func for convert ListTasksRequest to models.TasksFilter
+	filter := &models.TasksFilter{}
+
+	if len(listRequest.GetFiltering().GetStatuses()) > 0 {
+		domainStatuses := make([]models.TaskStatus, 0, len(listRequest.GetFiltering().GetStatuses()))
+
+		for _, pbStatus := range listRequest.GetFiltering().GetStatuses() {
+			domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
+		}
+
+		filter.Statuses = domainStatuses
+	}
+
+	switch listRequest.GetFiltering().GetCurrency().GetValue() {
+	case "EUR":
+		filter.Currency = utils.Pointer(models.CurrencyEUR)
+	case "USD":
+		filter.Currency = utils.Pointer(models.CurrencyUSD)
+	case "PLN":
+		filter.Currency = utils.Pointer(models.CurrencyPLN)
+	default:
+
+	}
+
+	domainTasks, err := s.taskService.List(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

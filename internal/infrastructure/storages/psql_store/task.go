@@ -155,6 +155,10 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
 		input.Amount,
 		input.Currency,
 	).StructScan(updatedTask); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errs.NewDomainNotFoundError().WithParam("task_id", fmt.Sprint(input.ID))
+		}
+
 		return nil, fmt.Errorf("updating task in DB error: %w", err)
 	}
 
@@ -192,9 +196,34 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 	)
 
 	if isList {
-		query = `SELECT id, title, description, customer_id, executor_id, status, created_at, updated_at FROM tasks`
+		query = `SELECT id, title, description, customer_id, executor_id, status, is_active, currency, amount, created_at, updated_at FROM tasks`
 	} else {
 		query = `SELECT count(*) FROM tasks`
+	}
+
+	query = fmt.Sprintf("%s WHERE TRUE", query)
+
+	if len(filter.Statuses) > 0 {
+		query, args, err = sqlx.In(fmt.Sprintf("%s AND status IN (?)", query), filter.Statuses)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	if filter.Currency != nil {
+		query = fmt.Sprintf("%s AND currency = ?", query)
+
+		args = append(args, filter.Currency.String())
+	}
+
+	if isList {
+		// TODO: Add norm sorting and paging
+		var (
+			sortBy    = "id"
+			sortOrder = "ASC"
+		)
+
+		query = fmt.Sprintf("%s ORDER BY %s %s", query, sortBy, sortOrder)
 	}
 
 	query = s.db.Rebind(query)

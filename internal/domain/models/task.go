@@ -48,7 +48,7 @@ type UpdateTask struct {
 type TasksFilter struct {
 	CustomerID *uuid.UUID
 	ExecutorID *uuid.UUID
-	Status     *TaskStatus
+	Statuses   []TaskStatus
 	Currency   *Currency
 	Search     *string
 	Sorting    *Sorting
@@ -70,3 +70,7 @@ const (
 	ProcessingStatus TaskStatus = "PROCESSING"
 	DoneStatus       TaskStatus = "DONE"
 )
+
+func (ts TaskStatus) String() string {
+	return string(ts)
+}
