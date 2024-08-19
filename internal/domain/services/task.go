@@ -6,6 +6,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/transaction"
 	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"log"
 )
@@ -19,18 +20,59 @@ type ITaskService interface {
 	Delete(ctx context.Context, taskID int64) error
 
 	AssignRandomExecutor(ctx context.Context, taskId int64) error
+
+	// CreateWithTransaction only for testing transactionManager
+	CreateWithTransaction(ctx context.Context, input *models.CreateTask) (int64, error)
 }
 
 type TaskService struct {
-	taskStorage psql_store.ITaskStorage
-	eventSender events.IEventSender
+	taskStorage        psql_store.ITaskStorage
+	eventSender        events.IEventSender
+	transactionManager transaction.DBTransactionManager
 }
 
-func NewTaskService(taskStorage psql_store.ITaskStorage, eventSender events.IEventSender) *TaskService {
+func NewTaskService(taskStorage psql_store.ITaskStorage, eventSender events.IEventSender, transactionManager transaction.DBTransactionManager) *TaskService {
 	return &TaskService{
-		taskStorage: taskStorage,
-		eventSender: eventSender,
+		taskStorage:        taskStorage,
+		eventSender:        eventSender,
+		transactionManager: transactionManager,
 	}
+}
+
+func (ts *TaskService) CreateWithTransaction(ctx context.Context, input *models.CreateTask) (int64, error) {
+	log.Println("CreateWithTransaction START")
+	tx, err := ts.transactionManager.StartTx(ctx)
+	if err != nil {
+		// TODO: Normal err handling
+		return 0, fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	// TODO: It's OK?
+	ts.taskStorage = ts.taskStorage.WithTransaction(tx.GetTx())
+
+	task, err := ts.taskStorage.Create(ctx, input)
+	if err != nil {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			return 0, fmt.Errorf("failed to rollback transaction: %v, error: %w", rollbackErr, err)
+		}
+
+		return 0, err
+	}
+
+	err = ts.eventSender.SendTaskCreated(ctx, task)
+	if err != nil {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+			return 0, fmt.Errorf("failed to rollback transaction: %v, error: %w", rollbackErr, err)
+		}
+
+		return 0, err
+	}
+
+	if err = tx.Finish(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return task.ID, nil
 }
 
 func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (int64, error) {
