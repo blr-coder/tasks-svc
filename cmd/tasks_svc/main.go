@@ -8,6 +8,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
+	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/transaction"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -77,7 +78,9 @@ func runApp() error {
 		return err
 	}
 
-	taskService := services.NewTaskService(taskPsqlStorage, sender)
+	txManager := transaction.NewTransactionManager(db)
+
+	taskService := services.NewTaskService(taskPsqlStorage, sender, txManager)
 	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)

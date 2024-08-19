@@ -22,14 +22,37 @@ type ITaskStorage interface {
 	Count(ctx context.Context, filter *models.TasksFilter) (uint64, error)
 	Update(ctx context.Context, input *models.Task) (*models.Task, error)
 	Delete(ctx context.Context, taskID int64) error
+
+	WithTransaction(tx *sqlx.Tx) *TaskPsqlStorage
+}
+
+type IStorageExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
+
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
 type TaskPsqlStorage struct {
-	db *sqlx.DB
+	db       *sqlx.DB
+	executor IStorageExecutor
 }
 
 func NewTaskPsqlStorage(database *sqlx.DB) *TaskPsqlStorage {
-	return &TaskPsqlStorage{db: database}
+	return &TaskPsqlStorage{
+		db:       database,
+		executor: database,
+	}
+}
+
+func (s *TaskPsqlStorage) WithTransaction(tx *sqlx.Tx) *TaskPsqlStorage {
+	return &TaskPsqlStorage{
+		db:       s.db,
+		executor: tx,
+	}
 }
 
 func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateTask) (*models.Task, error) {
@@ -44,7 +67,7 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 
 	task := &models.Task{}
 
-	err := s.db.GetContext(
+	err := s.executor.GetContext(
 		ctx,
 		task,
 		query,
@@ -82,7 +105,7 @@ func (s *TaskPsqlStorage) Get(ctx context.Context, taskID int64) (*models.Task, 
 
 	task := &models.Task{}
 
-	err := s.db.GetContext(ctx, task, query, taskID)
+	err := s.executor.GetContext(ctx, task, query, taskID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewDomainNotFoundError().WithParam("task_id", fmt.Sprint(taskID))
@@ -100,7 +123,7 @@ func (s *TaskPsqlStorage) List(ctx context.Context, filter *models.TasksFilter) 
 		return tasks, fmt.Errorf("fetching tasks from DB error: %w", err)
 	}
 
-	err = s.db.SelectContext(ctx, &tasks, query, args...)
+	err = s.executor.SelectContext(ctx, &tasks, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetching tasks from DB error: %w", err)
 	}
@@ -115,7 +138,7 @@ func (s *TaskPsqlStorage) Count(ctx context.Context, filter *models.TasksFilter)
 		return 0, fmt.Errorf("fetching tasks from DB error: %w", err)
 	}
 
-	err = s.db.GetContext(ctx, &count, query, args...)
+	err = s.executor.GetContext(ctx, &count, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("fetching tasks from DB error: %w", err)
 	}
@@ -142,7 +165,7 @@ func (s *TaskPsqlStorage) Update(ctx context.Context, input *models.Task) (*mode
 		updatedTask = &models.Task{}
 	)
 
-	if err := s.db.QueryRowxContext(
+	if err := s.executor.QueryRowxContext(
 		ctx,
 		query,
 		input.ID,
@@ -170,7 +193,7 @@ func (s *TaskPsqlStorage) Delete(ctx context.Context, taskID int64) error {
 
 	q := `DELETE FROM tasks WHERE id = $1`
 
-	res, err := s.db.ExecContext(ctx, s.db.Rebind(q), taskID)
+	res, err := s.executor.ExecContext(ctx, s.db.Rebind(q), taskID)
 	if err != nil {
 		return err
 	}
