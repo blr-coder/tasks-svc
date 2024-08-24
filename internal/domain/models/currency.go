@@ -8,6 +8,8 @@ const (
 	CurrencyPLN Currency = "PLN"
 )
 
+var DefaultCurrency = CurrencyEUR
+
 func (c Currency) String() string {
 	return string(c)
 }

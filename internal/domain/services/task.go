@@ -29,14 +29,31 @@ type TaskService struct {
 	taskStorage        psql_store.ITaskStorage
 	eventSender        events.IEventSender
 	transactionManager transaction.DBTransactionManager
+	currencyStorage    psql_store.ICurrencyStorage
 }
 
-func NewTaskService(taskStorage psql_store.ITaskStorage, eventSender events.IEventSender, transactionManager transaction.DBTransactionManager) *TaskService {
+func NewTaskService(taskStorage psql_store.ITaskStorage, currencyStorage psql_store.ICurrencyStorage, eventSender events.IEventSender, transactionManager transaction.DBTransactionManager) *TaskService {
 	return &TaskService{
 		taskStorage:        taskStorage,
 		eventSender:        eventSender,
 		transactionManager: transactionManager,
+		currencyStorage:    currencyStorage,
 	}
+}
+
+func (ts *TaskService) recalculateCurrencyToEUR(ctx context.Context, currency *models.Currency, amount *float64) (*float64, error) {
+	var res float64
+
+	rate, err := ts.currencyStorage.GetRate(ctx, currency.String())
+	if err != nil {
+		// TODO: Normal domain err
+		return nil, err
+	}
+
+	// TODO: Add round
+	res = *amount / rate
+
+	return &res, nil
 }
 
 func (ts *TaskService) CreateWithTransaction(ctx context.Context, input *models.CreateTask) (int64, error) {
@@ -58,6 +75,20 @@ func (ts *TaskService) CreateWithTransaction(ctx context.Context, input *models.
 
 		return 0, err
 	}
+
+	// Recalculate amount before sending event(for kafka use only EUR)
+	if input.Currency != nil && input.Currency != &models.DefaultCurrency && input.Amount != nil {
+		task.Amount, err = ts.recalculateCurrencyToEUR(ctx, task.Currency, task.Amount)
+		if err != nil {
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				return 0, fmt.Errorf("failed to rollback transaction: %v, error: %w", rollbackErr, err)
+			}
+
+			return 0, err
+		}
+	}
+
+	task.Currency = &models.DefaultCurrency
 
 	err = ts.eventSender.SendTaskCreated(ctx, task)
 	if err != nil {

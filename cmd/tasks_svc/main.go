@@ -72,6 +72,7 @@ func runApp() error {
 	}
 
 	taskPsqlStorage := psql_store.NewTaskPsqlStorage(db)
+	currencyPsqlStorage := psql_store.NewCurrencyPsqlStorage(db)
 
 	sender, err := kafka.NewKafkaSender(appConfig.KafkaConfig)
 	if err != nil {
@@ -80,7 +81,7 @@ func runApp() error {
 
 	txManager := transaction.NewTransactionManager(db)
 
-	taskService := services.NewTaskService(taskPsqlStorage, sender, txManager)
+	taskService := services.NewTaskService(taskPsqlStorage, currencyPsqlStorage, sender, txManager)
 	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
