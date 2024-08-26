@@ -65,7 +65,19 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		domainCurrency = utils.Pointer(currency)
 	}
 
-	newId, err := s.taskService.Create(ctx, &models.CreateTask{
+	/*newId, err := s.taskService.Create(ctx, &models.CreateTask{
+		Title:       createRequest.GetTitle(),
+		Description: createRequest.GetDescription(),
+		CustomerID:  customerID,
+		ExecutorID:  executorID,
+		Amount:      amount,
+		Currency:    domainCurrency,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}*/
+
+	newId, err := s.taskService.CreateWithTransaction(ctx, &models.CreateTask{
 		Title:       createRequest.GetTitle(),
 		Description: createRequest.GetDescription(),
 		CustomerID:  customerID,

@@ -21,7 +21,6 @@ type ITaskService interface {
 
 	AssignRandomExecutor(ctx context.Context, taskId int64) error
 
-	// CreateWithTransaction only for testing transactionManager
 	CreateWithTransaction(ctx context.Context, input *models.CreateTask) (int64, error)
 }
 
@@ -44,14 +43,14 @@ func NewTaskService(taskStorage psql_store.ITaskStorage, currencyStorage psql_st
 func (ts *TaskService) recalculateCurrencyToEUR(ctx context.Context, currency *models.Currency, amount *float64) (*float64, error) {
 	var res float64
 
-	rate, err := ts.currencyStorage.GetRate(ctx, currency.String())
+	rate, err := ts.currencyStorage.GetRateByEUR(ctx, *currency)
 	if err != nil {
 		// TODO: Normal domain err
 		return nil, err
 	}
 
 	// TODO: Add round
-	res = *amount / rate
+	res = *amount / rate.RateEur
 
 	return &res, nil
 }
@@ -76,8 +75,9 @@ func (ts *TaskService) CreateWithTransaction(ctx context.Context, input *models.
 		return 0, err
 	}
 
+	// TODO: Move it to checkInput() func or something like that
 	// Recalculate amount before sending event(for kafka use only EUR)
-	if input.Currency != nil && input.Currency != &models.DefaultCurrency && input.Amount != nil {
+	if input.Currency != nil && utils.Value(input.Currency) != models.DefaultCurrency && input.Amount != nil {
 		task.Amount, err = ts.recalculateCurrencyToEUR(ctx, task.Currency, task.Amount)
 		if err != nil {
 			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
