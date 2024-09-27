@@ -104,7 +104,7 @@ func ProtoCurrencyToDomainCurrency(pbCurrency string) (currency models.Currency,
 	case "PLN":
 		currency = models.CurrencyPLN
 	default:
-		return "", fmt.Errorf("unknown currency, %s", pbCurrency)
+		return "", fmt.Errorf("unknown currency_checker, %s", pbCurrency)
 	}
 
 	return currency, nil
