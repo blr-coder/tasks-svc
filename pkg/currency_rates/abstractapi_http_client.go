@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"log"
 	"net/http"
 	"strings"
@@ -32,18 +33,18 @@ type ExchangeRatesInfo struct {
 	ExchangeRates map[string]float64 `json:"exchange_rates"`
 }
 
-func (c *Client) GetRates(ctx context.Context, from string, currenciesTo []string) (exchangeInfo *ExchangeRatesInfo, err error) {
+func (c *Client) GetRates(ctx context.Context, from models.Currency, currenciesTo models.CurrencyList) (exchangeInfo *ExchangeRatesInfo, err error) {
 	log.Println("GetRates for CURRENCY_FROM:", from)
 	log.Println("GetRates for CURRENCIES_TO:", currenciesTo)
 
 	url := fmt.Sprintf(
 		abstractAPIFormat,
 		c.apiToken,
-		from,
-		strings.Join(currenciesTo, ","),
+		from.String(),
+		strings.Join(currenciesTo.ToStrings(), ","),
 	)
 
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}

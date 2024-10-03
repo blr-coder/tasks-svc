@@ -11,7 +11,7 @@ import (
 
 type ICurrencyStorage interface {
 	GetRateByEUR(ctx context.Context, currency models.Currency) (*models.CurrencyRate, error)
-	ListCurrencyTitles(ctx context.Context) ([]*models.Currency, error)
+	ListCurrencyTickers(ctx context.Context) (models.CurrencyList, error)
 }
 
 type CurrencyPsqlStorage struct {
@@ -47,8 +47,8 @@ func (cs *CurrencyPsqlStorage) GetRateByEUR(ctx context.Context, currency models
 	return rate, nil
 }
 
-func (cs *CurrencyPsqlStorage) ListCurrencyTitles(ctx context.Context) ([]*models.Currency, error) {
-	var currencies []*models.Currency
+func (cs *CurrencyPsqlStorage) ListCurrencyTickers(ctx context.Context) (models.CurrencyList, error) {
+	var currencies models.CurrencyList
 
 	query := `
 		SELECT
