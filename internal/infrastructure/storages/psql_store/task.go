@@ -83,7 +83,7 @@ func (s *TaskPsqlStorage) Create(ctx context.Context, createTask *models.CreateT
 		// TODO: handlePostgresError
 		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Code == "23505" {
-				// Это ошибка дублирования ключа
+				// Ошибка дублирования ключа
 				return nil, errs.NewDomainDuplicateError().WithParam("create_task", fmt.Sprint(createTask))
 			}
 		}

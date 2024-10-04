@@ -1,4 +1,4 @@
-package currency_rates
+package currency_rates_client
 
 import (
 	"context"
