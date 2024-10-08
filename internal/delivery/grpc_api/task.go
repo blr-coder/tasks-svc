@@ -46,8 +46,8 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 		amount         *float64
 	)
 
-	if createRequest.GetExecutorId() != nil {
-		eID, err := uuid.Parse(createRequest.GetExecutorId().GetValue())
+	if createRequest.ExecutorId != nil {
+		eID, err := uuid.Parse(createRequest.GetExecutorId())
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -125,31 +125,7 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 }
 
 func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
-	// TODO: Add func for convert ListTasksRequest to models.TasksFilter
-	filter := &models.TasksFilter{}
-
-	if len(listRequest.GetFiltering().GetStatuses()) > 0 {
-		domainStatuses := make([]models.TaskStatus, 0, len(listRequest.GetFiltering().GetStatuses()))
-
-		for _, pbStatus := range listRequest.GetFiltering().GetStatuses() {
-			domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
-		}
-
-		filter.Statuses = domainStatuses
-	}
-
-	switch listRequest.GetFiltering().GetCurrency().GetValue() {
-	case "EUR":
-		filter.Currency = utils.Pointer(models.CurrencyEUR)
-	case "USD":
-		filter.Currency = utils.Pointer(models.CurrencyUSD)
-	case "PLN":
-		filter.Currency = utils.Pointer(models.CurrencyPLN)
-	default:
-
-	}
-
-	domainTasks, err := s.taskService.List(ctx, filter)
+	domainTasks, err := s.taskService.List(ctx, PbListTasksRequestToDomain(listRequest))
 	if err != nil {
 		return nil, err
 	}
@@ -181,8 +157,8 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		return nil, err
 	}
 
-	if updateRequest.GetCustomerId() != nil {
-		customerID, err = uuid.Parse(updateRequest.GetCustomerId().GetValue())
+	if updateRequest.CustomerId != nil {
+		customerID, err = uuid.Parse(updateRequest.GetCustomerId())
 		if err != nil {
 			return nil, err
 		}
@@ -190,8 +166,8 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.CustomerID = &customerID
 	}
 
-	if updateRequest.GetExecutorId() != nil {
-		executorID, err = uuid.Parse(updateRequest.GetExecutorId().GetValue())
+	if updateRequest.ExecutorId != nil {
+		executorID, err = uuid.Parse(updateRequest.GetExecutorId())
 		if err != nil {
 			return nil, err
 		}
@@ -199,12 +175,12 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.ExecutorID = utils.Pointer(executorID)
 	}
 
-	if updateRequest.GetTitle() != nil {
-		updateTask.Title = utils.Pointer(updateRequest.GetTitle().GetValue())
+	if updateRequest.Title != nil {
+		updateTask.Title = updateRequest.Title
 	}
 
-	if updateRequest.GetDescription() != nil {
-		updateTask.Description = utils.Pointer(updateRequest.GetDescription().GetValue())
+	if updateRequest.Description != nil {
+		updateTask.Description = updateRequest.Description
 	}
 
 	if updateRequest.GetStatus() != taskpbv1.TaskStatus_TASK_STATUS_UNSPECIFIED {
@@ -222,7 +198,7 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 	}
 
 	if updateRequest.IsActive != nil {
-		updateTask.IsActive = utils.Pointer(updateRequest.IsActive.Value)
+		updateTask.IsActive = updateRequest.IsActive
 	}
 
 	task, err := s.taskService.Update(ctx, updateTask)

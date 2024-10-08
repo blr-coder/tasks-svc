@@ -53,6 +53,7 @@ type TasksFilter struct {
 	Search     *string
 	Sorting    *Sorting
 	Limiting   *Limiting
+	IsActive   *bool
 }
 
 type Sorting struct {

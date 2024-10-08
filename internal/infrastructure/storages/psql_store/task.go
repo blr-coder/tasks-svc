@@ -226,17 +226,25 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 
 	query = fmt.Sprintf("%s WHERE TRUE", query)
 
-	if len(filter.Statuses) > 0 {
-		query, args, err = sqlx.In(fmt.Sprintf("%s AND status IN (?)", query), filter.Statuses)
-		if err != nil {
-			return "", nil, err
+	if filter != nil {
+		if len(filter.Statuses) > 0 {
+			query, args, err = sqlx.In(fmt.Sprintf("%s AND status IN (?)", query), filter.Statuses)
+			if err != nil {
+				return "", nil, err
+			}
 		}
-	}
 
-	if filter.Currency != nil {
-		query = fmt.Sprintf("%s AND currency = ?", query)
+		if filter.Currency != nil {
+			query = fmt.Sprintf("%s AND currency = ?", query)
 
-		args = append(args, filter.Currency.String())
+			args = append(args, filter.Currency.String())
+		}
+
+		if filter.IsActive != nil {
+			query = fmt.Sprintf("%s AND is_active = ?", query)
+
+			args = append(args, filter.IsActive)
+		}
 	}
 
 	if isList {
