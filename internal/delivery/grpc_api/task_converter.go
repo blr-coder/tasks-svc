@@ -76,21 +76,27 @@ func domainTaskToPBTask(task *models.Task) *taskpbv1.Task {
 }
 
 func PbListTasksRequestToDomain(listRequest *taskpbv1.ListTasksRequest) *models.TasksFilter {
-	filter := &models.TasksFilter{}
+	return &models.TasksFilter{
+		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
+		Sorting:   nil,
+		Limiting:  nil,
+	}
+}
 
-	if listRequest.Filtering != nil {
-		if listRequest.GetFiltering().Statuses != nil {
-			domainStatuses := make([]models.TaskStatus, 0, len(listRequest.GetFiltering().GetStatuses()))
+func PbListTasksFilteringToDomain(pbFiltering *taskpbv1.TaskFiltering) *models.TaskFiltering {
+	filter := &models.TaskFiltering{}
 
-			for _, pbStatus := range listRequest.GetFiltering().GetStatuses() {
-				domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
-			}
+	if pbFiltering != nil {
+		domainStatuses := make([]models.TaskStatus, 0, len(pbFiltering.GetStatuses()))
 
-			filter.Statuses = domainStatuses
+		for _, pbStatus := range pbFiltering.GetStatuses() {
+			domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
 		}
 
-		if listRequest.GetFiltering().Currency != nil {
-			switch listRequest.GetFiltering().GetCurrency() {
+		filter.Statuses = domainStatuses
+
+		if pbFiltering.Currency != nil {
+			switch pbFiltering.GetCurrency() {
 			case "EUR":
 				filter.Currency = utils.Pointer(models.CurrencyEUR)
 			case "USD":
@@ -102,7 +108,7 @@ func PbListTasksRequestToDomain(listRequest *taskpbv1.ListTasksRequest) *models.
 			}
 		}
 
-		filter.IsActive = listRequest.Filtering.IsActive
+		filter.IsActive = pbFiltering.IsActive
 	}
 
 	return filter
