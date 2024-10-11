@@ -61,11 +61,12 @@ type TasksFilter struct {
 }
 
 type Sorting struct {
-	SortBy, SortOrder string
+	SortBy    []string
+	SortOrder string
 }
 
 type Limiting struct {
-	Limit, Offset int32
+	Limit, Offset int64
 }
 
 type TaskStatus string

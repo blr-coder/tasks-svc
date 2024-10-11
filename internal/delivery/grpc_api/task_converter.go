@@ -5,6 +5,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/pkg/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"strings"
 )
 
 func DomainTaskStatusToPB(status models.TaskStatus) (pbStatus taskpbv1.TaskStatus) {
@@ -78,9 +79,41 @@ func domainTaskToPBTask(task *models.Task) *taskpbv1.Task {
 func PbListTasksRequestToDomain(listRequest *taskpbv1.ListTasksRequest) *models.TasksFilter {
 	return &models.TasksFilter{
 		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
-		Sorting:   nil,
-		Limiting:  nil,
+		Sorting:   PbTasksSortingToDomain(listRequest.GetSorting()),
+		Limiting:  PbListLimitingToDB(listRequest.GetLimiting()),
 	}
+}
+
+func PbListLimitingToDB(pbLimiting *taskpbv1.Limiting) *models.Limiting {
+	listLimiting := &models.Limiting{}
+
+	if nil == pbLimiting {
+		return listLimiting
+	}
+
+	if pbLimiting.GetLimit() != 0 {
+		listLimiting.Limit = pbLimiting.GetLimit()
+	}
+
+	if pbLimiting.GetOffset() != 0 {
+		listLimiting.Offset = pbLimiting.GetOffset()
+	}
+
+	return listLimiting
+}
+
+func PbTasksSortingToDomain(pbSorting *taskpbv1.TaskSorting) *models.Sorting {
+	domainSorting := &models.Sorting{}
+
+	for _, sortBy := range pbSorting.GetSortBy() {
+		domainSorting.SortBy = append(domainSorting.SortBy, strings.ToLower(sortBy.String()))
+	}
+
+	if pbSorting.GetSortOrder().String() != "" {
+		domainSorting.SortOrder = pbSorting.GetSortOrder().String()
+	}
+
+	return domainSorting
 }
 
 func PbListTasksFilteringToDomain(pbFiltering *taskpbv1.TaskFiltering) *models.TaskFiltering {

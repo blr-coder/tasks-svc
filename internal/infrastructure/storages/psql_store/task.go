@@ -9,6 +9,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/lib/pq"
 	"log"
+	"strings"
 
 	// DB driver
 	"github.com/jmoiron/sqlx"
@@ -250,11 +251,31 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 	if isList {
 		// TODO: Add norm sorting and paging
 		var (
-			sortBy    = "id"
+			sortBy    = []string{"id"}
 			sortOrder = "ASC"
 		)
 
-		query = fmt.Sprintf("%s ORDER BY %s %s", query, sortBy, sortOrder)
+		if filter.Sorting.SortOrder != "" {
+			sortOrder = filter.Sorting.SortOrder
+		}
+
+		if len(filter.Sorting.SortBy) > 0 {
+			sortBy = filter.Sorting.SortBy
+		}
+
+		query = fmt.Sprintf("%s ORDER BY %s %s", query, strings.Join(sortBy, ","), sortOrder)
+
+		if filter.Limiting.Limit != 0 {
+			query = fmt.Sprintf("%s LIMIT ?", query)
+
+			args = append(args, filter.Limiting.Limit)
+		}
+
+		if filter.Limiting.Offset > 0 {
+			query = fmt.Sprintf("%s OFFSET ?", query)
+
+			args = append(args, filter.Limiting.Offset)
+		}
 	}
 
 	query = s.db.Rebind(query)
