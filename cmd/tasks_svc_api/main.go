@@ -24,7 +24,7 @@ func main() {
 }
 
 func runApp() error {
-	log.Println("ASYNC")
+	log.Println("RUN TASK API")
 
 	ctx := context.Background()
 
@@ -35,31 +35,6 @@ func runApp() error {
 	if err != nil {
 		return err
 	}
-
-	// Test kafka
-	/*consumer, err := sarama.NewConsumer([]string{appConfig.KafkaConfig.Address}, sarama.NewConfig())
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := consumer.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	partitionConsumer, err := consumer.ConsumePartition(appConfig.KafkaConfig.Topic, int32(appConfig.KafkaConfig.Partition), sarama.OffsetOldest)
-	if err != nil {
-		return err
-	}
-
-	kc := kafka.NewConsumer(partitionConsumer)
-
-	err = kc.Run()
-	if err != nil {
-		return err
-	}*/
-	// Test kafka
 
 	db, err := sqlx.Open("postgres", appConfig.PostgresConnLink)
 	if err != nil {

@@ -1,12 +1,64 @@
 package grpc
 
 import (
+	"fmt"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/pkg/utils"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
 )
+
+func PbCreateTaskToDomain(createRequest *taskpbv1.CreateTaskRequest) (*models.CreateTask, error) {
+	customerID, err := uuid.Parse(createRequest.GetCustomerId())
+	if err != nil {
+		return nil, err
+	}
+
+	createTask := &models.CreateTask{
+		Title:       createRequest.GetTitle(),
+		Description: createRequest.GetDescription(),
+		CustomerID:  customerID,
+	}
+
+	if createRequest.ExecutorId != nil {
+		eID, err := uuid.Parse(createRequest.GetExecutorId())
+		if err != nil {
+			return nil, err
+		}
+
+		createTask.ExecutorID = &eID
+	}
+
+	if createRequest.GetPrice() != nil {
+		currency, err := PBCurrencyToDomainCurrency(createRequest.GetPrice().GetCurrency())
+		if err != nil {
+			return nil, err
+		}
+
+		createTask.Amount = utils.Pointer(createRequest.GetPrice().GetAmount())
+		createTask.Currency = utils.Pointer(currency)
+	}
+
+	return createTask, nil
+}
+
+func PBCurrencyToDomainCurrency(pbCurrency string) (currency models.Currency, err error) {
+	// TODO: Add ENUM to PROTO or another solution
+	switch pbCurrency {
+	case "EUR":
+		currency = models.CurrencyEUR
+	case "USD":
+		currency = models.CurrencyUSD
+	case "PLN":
+		currency = models.CurrencyPLN
+	default:
+		return "", fmt.Errorf("unknown currency, %s", pbCurrency)
+	}
+
+	return currency, nil
+}
 
 func DomainTaskStatusToPB(status models.TaskStatus) (pbStatus taskpbv1.TaskStatus) {
 	switch status {
