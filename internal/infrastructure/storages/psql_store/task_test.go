@@ -103,6 +103,25 @@ func addTestsTasks(t *testing.T, s *TaskPsqlStorage) {
 		ExecutorID:  nil,
 	})
 	require.NoError(t, err)
+
+	_, err = s.Create(context.Background(), &models.CreateTask{
+		Title:       "Third test task title",
+		Description: "Third test task description",
+		CustomerID:  uuid.UUID([]byte(testUUID)),
+		ExecutorID:  nil,
+	})
+	require.NoError(t, err)
+
+	_, err = s.Update(context.Background(), &models.Task{
+		ID:          3,
+		Title:       "Third test task title",
+		Description: "Third test task description",
+		CustomerID:  uuid.UUID([]byte(testUUID)),
+		ExecutorID:  nil,
+		Status:      models.PendingStatus,
+		IsActive:    false,
+	})
+	require.NoError(t, err)
 }
 
 func resetTasksTable(t *testing.T) {
@@ -247,6 +266,8 @@ func TestTaskPsqlStorage_Update(t *testing.T) {
 func TestTaskPsqlStorage_List(t *testing.T) {
 	testDB := NewTaskPsqlStorage(dbConnTest)
 
+	var isActive = false
+
 	testCases := []struct {
 		name    string
 		filter  *models.TasksFilter
@@ -254,8 +275,12 @@ func TestTaskPsqlStorage_List(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:   "ok without filters",
-			filter: &models.TasksFilter{},
+			name: "ok without filters",
+			filter: &models.TasksFilter{
+				Filtering: &models.TaskFiltering{},
+				Sorting:   &models.Sorting{},
+				Limiting:  &models.Limiting{},
+			},
 			want: []*models.Task{
 				{
 					ID:          1,
@@ -283,13 +308,28 @@ func TestTaskPsqlStorage_List(t *testing.T) {
 					CreatedAt:   time.Time{},
 					UpdatedAt:   time.Time{},
 				},
+				{
+					ID:          3,
+					Title:       "Third test task title",
+					Description: "Third test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    false,
+					Currency:    nil,
+					Amount:      nil,
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
 			},
 			wantErr: nil,
 		},
 		{
-			name: "ok list by currency",
+			name: "ok list by 'currency'",
 			filter: &models.TasksFilter{
-				Currency: utils.Pointer(models.CurrencyPLN),
+				Filtering: &models.TaskFiltering{Currency: utils.Pointer(models.CurrencyPLN)},
+				Sorting:   &models.Sorting{},
+				Limiting:  &models.Limiting{},
 			},
 			want: []*models.Task{
 				{
@@ -302,6 +342,59 @@ func TestTaskPsqlStorage_List(t *testing.T) {
 					IsActive:    true,
 					Currency:    utils.Pointer(models.CurrencyPLN),
 					Amount:      utils.Pointer(500.33),
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok list with limiting",
+			filter: &models.TasksFilter{
+				Filtering: &models.TaskFiltering{},
+				Sorting:   &models.Sorting{},
+				Limiting: &models.Limiting{
+					Limit:  1,
+					Offset: 1,
+				},
+			},
+			want: []*models.Task{
+				{
+					ID:          2,
+					Title:       "Second test task title",
+					Description: "Second test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    true,
+					Currency:    nil,
+					Amount:      nil,
+					CreatedAt:   time.Time{},
+					UpdatedAt:   time.Time{},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok list by 'is_active'",
+			filter: &models.TasksFilter{
+				Filtering: &models.TaskFiltering{
+					IsActive: &isActive,
+				},
+				Sorting:  &models.Sorting{},
+				Limiting: &models.Limiting{},
+			},
+			want: []*models.Task{
+				{
+					ID:          3,
+					Title:       "Third test task title",
+					Description: "Third test task description",
+					CustomerID:  uuid.UUID([]byte(testUUID)),
+					ExecutorID:  nil,
+					Status:      models.PendingStatus,
+					IsActive:    false,
+					Currency:    nil,
+					Amount:      nil,
 					CreatedAt:   time.Time{},
 					UpdatedAt:   time.Time{},
 				},

@@ -237,13 +237,11 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 
 		if filter.Filtering.Currency != nil {
 			query = fmt.Sprintf("%s AND currency = ?", query)
-
 			args = append(args, filter.Filtering.Currency.String())
 		}
 
 		if filter.Filtering.IsActive != nil {
 			query = fmt.Sprintf("%s AND is_active = ?", query)
-
 			args = append(args, filter.Filtering.IsActive)
 		}
 	}
@@ -267,13 +265,11 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 
 		if filter.Limiting.Limit != 0 {
 			query = fmt.Sprintf("%s LIMIT ?", query)
-
 			args = append(args, filter.Limiting.Limit)
 		}
 
 		if filter.Limiting.Offset > 0 {
 			query = fmt.Sprintf("%s OFFSET ?", query)
-
 			args = append(args, filter.Limiting.Offset)
 		}
 	}

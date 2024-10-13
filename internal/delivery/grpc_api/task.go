@@ -59,7 +59,11 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 }
 
 func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
-	domainTasks, err := s.taskService.List(ctx, PbListTasksRequestToDomain(listRequest))
+	domainTasks, err := s.taskService.List(ctx, &models.TasksFilter{
+		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
+		Sorting:   PbTasksSortingToDomain(listRequest.GetSorting()),
+		Limiting:  PbListLimitingToDB(listRequest.GetLimiting()),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +72,11 @@ func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1
 }
 
 func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpbv1.TotalTasksRequest) (*taskpbv1.TotalTasksResponse, error) {
-	total, err := s.taskService.Count(ctx, &models.TasksFilter{})
+	total, err := s.taskService.Count(ctx, &models.TasksFilter{
+		Filtering: PbListTasksFilteringToDomain(totalRequest.GetFiltering()),
+		Sorting:   PbTasksSortingToDomain(totalRequest.GetSorting()),
+		Limiting:  PbListLimitingToDB(totalRequest.GetLimiting()),
+	})
 	if err != nil {
 		return nil, err
 	}
