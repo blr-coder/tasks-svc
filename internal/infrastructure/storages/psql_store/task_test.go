@@ -141,15 +141,15 @@ func TestTaskPsqlStorage_Create(t *testing.T) {
 		{
 			name: "ok",
 			createTask: &models.CreateTask{
-				Title:       "title 3",
-				Description: "Description 3333 test !!!",
+				Title:       "title 4",
+				Description: "Description 4444 test !!!",
 				CustomerID:  uuid.UUID([]byte(testUUID)),
 				ExecutorID:  nil,
 			},
 			want: &models.Task{
-				ID:          3,
-				Title:       "title 3",
-				Description: "Description 3333 test !!!",
+				ID:          4,
+				Title:       "title 4",
+				Description: "Description 4444 test !!!",
 				CustomerID:  uuid.UUID([]byte(testUUID)),
 				ExecutorID:  nil,
 				Status:      models.PendingStatus,

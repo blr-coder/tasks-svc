@@ -9,3 +9,7 @@ migrate_down:
 	migrate -path $(MIGRATION_DIR) -database $(MIGRATION_URL) -verbose down 1
 migrate_status:
 	migrate -path $(MIGRATION_DIR) -database $(MIGRATION_URL) version
+
+.PHONY: test
+test:
+	 go test ./...

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
+	"github.com/blr-coder/tasks-svc/internal/delivery/grpc_api/handlers"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
@@ -57,7 +58,7 @@ func runApp() error {
 	txManager := transaction.NewTransactionManager(db)
 
 	taskService := services.NewTaskService(taskPsqlStorage, currencyPsqlStorage, sender, txManager)
-	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)
+	taskGRPCServer := handlers.NewTaskServiceServer(validator, taskService)
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
 
