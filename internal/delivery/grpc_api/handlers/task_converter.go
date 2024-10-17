@@ -75,17 +75,17 @@ func DomainTaskStatusToPB(status models.TaskStatus) (pbStatus taskpbv1.TaskStatu
 	return pbStatus
 }
 
-func PbTaskStatusToDomain(pbStatus taskpbv1.TaskStatus) (dStatus models.TaskStatus) {
+func PbTaskStatusToDomain(pbStatus taskpbv1.TaskStatus) (dStatus *models.TaskStatus) {
 	switch pbStatus {
 	case taskpbv1.TaskStatus_TASK_STATUS_PENDING:
-		dStatus = models.PendingStatus
+		dStatus = utils.Pointer(models.PendingStatus)
 	case taskpbv1.TaskStatus_TASK_STATUS_PROCESSING:
-		dStatus = models.ProcessingStatus
+		dStatus = utils.Pointer(models.ProcessingStatus)
 	case taskpbv1.TaskStatus_TASK_STATUS_DONE:
-		dStatus = models.DoneStatus
+		dStatus = utils.Pointer(models.DoneStatus)
 	default:
-		// TODO: UNSPECIFIED???
-		dStatus = models.PendingStatus
+		// TODO: UNSPECIFIED == nil it's OK???
+		dStatus = nil
 	}
 
 	return dStatus
@@ -128,14 +128,6 @@ func domainTaskToPBTask(task *models.Task) *taskpbv1.Task {
 	return t
 }
 
-func PbListTasksRequestToDomain(listRequest *taskpbv1.ListTasksRequest) *models.TasksFilter {
-	return &models.TasksFilter{
-		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
-		Sorting:   PbTasksSortingToDomain(listRequest.GetSorting()),
-		Limiting:  PbListLimitingToDB(listRequest.GetLimiting()),
-	}
-}
-
 func PbListLimitingToDB(pbLimiting *taskpbv1.Limiting) *models.Limiting {
 	listLimiting := &models.Limiting{}
 
@@ -175,7 +167,10 @@ func PbListTasksFilteringToDomain(pbFiltering *taskpbv1.TaskFiltering) *models.T
 		domainStatuses := make([]models.TaskStatus, 0, len(pbFiltering.GetStatuses()))
 
 		for _, pbStatus := range pbFiltering.GetStatuses() {
-			domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
+			domainStatus := PbTaskStatusToDomain(pbStatus)
+			if domainStatus != nil {
+				domainStatuses = append(domainStatuses, *domainStatus)
+			}
 		}
 
 		filter.Statuses = domainStatuses

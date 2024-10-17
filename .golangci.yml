@@ -1,0 +1,26 @@
+linters:
+  enable:
+    - govet      # Встроенный линтер Go
+#    - dupl
+    - errcheck
+    - staticcheck # Продвинутая статическая проверка кода
+
+run:
+  tests: false  # Не проверять файлы тестов
+
+issues:
+  max-issues-per-linter: 0  # Отключить ограничение на количество ошибок на один линтер
+  max-same-issues: 0        # Отключить ограничение на количество одинаковых ошибок
+  exclude-dirs:
+    - vendor
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+# Отключить некоторые избыточные линтеры
+linters-settings:
+  lll:
+    line-length: 250

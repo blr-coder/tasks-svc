@@ -91,7 +91,13 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		customerID, executorID uuid.UUID
 		err                    error
 		updateTask             = &models.UpdateTask{
-			ID: updateRequest.GetTaskId(),
+			ID:          updateRequest.GetTaskId(),
+			Title:       updateRequest.Title,
+			Description: updateRequest.Description,
+			Status:      PbTaskStatusToDomain(updateRequest.GetStatus()),
+			Currency:    nil,
+			Amount:      nil,
+			IsActive:    updateRequest.IsActive,
 		}
 	)
 
@@ -117,18 +123,6 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.ExecutorID = utils.Pointer(executorID)
 	}
 
-	if updateRequest.Title != nil {
-		updateTask.Title = updateRequest.Title
-	}
-
-	if updateRequest.Description != nil {
-		updateTask.Description = updateRequest.Description
-	}
-
-	if updateRequest.GetStatus() != taskpbv1.TaskStatus_TASK_STATUS_UNSPECIFIED {
-		updateTask.Status = utils.Pointer(PbTaskStatusToDomain(updateRequest.GetStatus()))
-	}
-
 	if updateRequest.Price != nil {
 		currency, err := PBCurrencyToDomainCurrency(updateRequest.GetPrice().GetCurrency())
 		if err != nil {
@@ -137,10 +131,6 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 
 		updateTask.Currency = utils.Pointer(currency)
 		updateTask.Amount = utils.Pointer(updateRequest.GetPrice().GetAmount())
-	}
-
-	if updateRequest.IsActive != nil {
-		updateTask.IsActive = updateRequest.IsActive
 	}
 
 	task, err := s.taskService.Update(ctx, updateTask)
@@ -177,7 +167,7 @@ func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.Set
 
 	_, err := s.taskService.Update(ctx, &models.UpdateTask{
 		ID:     request.GetTaskId(),
-		Status: utils.Pointer(PbTaskStatusToDomain(request.GetStatus())),
+		Status: PbTaskStatusToDomain(request.GetStatus()),
 	})
 	if err != nil {
 		// TODO: Add check for domainError - IsUpdatePossible
