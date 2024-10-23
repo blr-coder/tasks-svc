@@ -46,14 +46,14 @@ type DomainNotFoundError struct {
 
 func NewDomainNotFoundError() *DomainError {
 	return &DomainError{
-		Message: fmt.Sprintf("Record not found"),
+		Message: "Record not found",
 		Params:  map[string]string{},
 	}
 }
 
 func NewDomainDuplicateError() *DomainError {
 	return &DomainError{
-		Message: fmt.Sprintf("Record already exist"),
+		Message: "Record already exist",
 		Params:  map[string]string{},
 	}
 }

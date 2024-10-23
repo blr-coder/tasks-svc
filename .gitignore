@@ -19,6 +19,7 @@ bin
 configs/appconfig.yaml
 reports
 .env
+/tools
 
 # Mac OS X files
 .DS_Store

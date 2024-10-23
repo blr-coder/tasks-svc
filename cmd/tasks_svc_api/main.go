@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	grpc "github.com/blr-coder/tasks-svc/internal/delivery/grpc_api"
+	"github.com/blr-coder/tasks-svc/internal/delivery/grpc_api/handlers"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
@@ -24,7 +25,7 @@ func main() {
 }
 
 func runApp() error {
-	log.Println("ASYNC")
+	log.Println("RUN TASK API")
 
 	ctx := context.Background()
 
@@ -35,31 +36,6 @@ func runApp() error {
 	if err != nil {
 		return err
 	}
-
-	// Test kafka
-	/*consumer, err := sarama.NewConsumer([]string{appConfig.KafkaConfig.Address}, sarama.NewConfig())
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := consumer.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	partitionConsumer, err := consumer.ConsumePartition(appConfig.KafkaConfig.Topic, int32(appConfig.KafkaConfig.Partition), sarama.OffsetOldest)
-	if err != nil {
-		return err
-	}
-
-	kc := kafka.NewConsumer(partitionConsumer)
-
-	err = kc.Run()
-	if err != nil {
-		return err
-	}*/
-	// Test kafka
 
 	db, err := sqlx.Open("postgres", appConfig.PostgresConnLink)
 	if err != nil {
@@ -82,7 +58,7 @@ func runApp() error {
 	txManager := transaction.NewTransactionManager(db)
 
 	taskService := services.NewTaskService(taskPsqlStorage, currencyPsqlStorage, sender, txManager)
-	taskGRPCServer := grpc.NewTaskServiceServer(validator, taskService)
+	taskGRPCServer := handlers.NewTaskServiceServer(validator, taskService)
 
 	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
 

@@ -3,6 +3,9 @@ package grpc
 import (
 	"fmt"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
+	"github.com/blr-coder/tasks-svc/internal/delivery/grpc_api/handlers"
+	"github.com/blr-coder/tasks-svc/internal/delivery/grpc_api/interceptors"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -12,11 +15,14 @@ type Server struct {
 }
 
 func NewGRPCServer(
-	taskServer *TaskServiceServer,
+	taskServer *handlers.TaskServiceServer,
 	// someServer1 *SomeServiceServer1,
 	// someServer2 *SomeServiceServer2,
 ) *Server {
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		recovery.UnaryServerInterceptor(),
+		interceptors.SimpleLoggingInterceptor,
+	))
 
 	// register grpcServerServices
 	taskpbv1.RegisterTaskServiceServer(grpcServer, taskServer)

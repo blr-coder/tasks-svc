@@ -45,22 +45,28 @@ type UpdateTask struct {
 	IsActive    *bool
 }
 
-type TasksFilter struct {
+type TaskFiltering struct {
 	CustomerID *uuid.UUID
 	ExecutorID *uuid.UUID
 	Statuses   []TaskStatus
 	Currency   *Currency
 	Search     *string
-	Sorting    *Sorting
-	Limiting   *Limiting
+	IsActive   *bool
+}
+
+type TasksFilter struct {
+	Filtering *TaskFiltering
+	Sorting   *Sorting
+	Limiting  *Limiting
 }
 
 type Sorting struct {
-	SortBy, SortOrder string
+	SortBy    []string
+	SortOrder string
 }
 
 type Limiting struct {
-	Limit, Offset int32
+	Limit, Offset int64
 }
 
 type TaskStatus string

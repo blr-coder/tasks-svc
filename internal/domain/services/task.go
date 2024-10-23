@@ -64,9 +64,9 @@ func (ts *TaskService) CreateWithTransaction(ctx context.Context, input *models.
 	}
 
 	// TODO: It's OK?
-	ts.taskStorage = ts.taskStorage.WithTransaction(tx.GetTx())
+	storage := ts.taskStorage.WithTransaction(tx.GetTx())
 
-	task, err := ts.taskStorage.Create(ctx, input)
+	task, err := storage.Create(ctx, input)
 	if err != nil {
 		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
 			return 0, fmt.Errorf("failed to rollback transaction: %v, error: %w", rollbackErr, err)
@@ -126,7 +126,7 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, error) {
 	task, err := ts.taskStorage.Get(ctx, taskID)
 	if err != nil {
-		// TODO: Check DomainNotFoundError
+		// TODO: Check DomainNotFoundError ???
 		return nil, err
 	}
 

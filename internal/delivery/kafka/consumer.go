@@ -3,7 +3,6 @@ package kafka
 import (
 	"encoding/json"
 	"github.com/IBM/sarama"
-	"github.com/blr-coder/tasks-svc/internal/delivery"
 	"github.com/davecgh/go-spew/spew"
 	"log"
 )
@@ -17,7 +16,7 @@ func NewConsumer(partitionConsumer sarama.PartitionConsumer) *Consumer {
 }
 
 func (kc *Consumer) Run() error {
-	var event delivery.Task
+	var event Task
 
 	i := 0
 	for ; ; i++ {
@@ -37,4 +36,10 @@ func (kc *Consumer) Run() error {
 	log.Printf("Finished. Received %d messages.\n", i)
 
 	return nil
+}
+
+type Task struct {
+	ID          int64
+	Title       string
+	Description string
 }

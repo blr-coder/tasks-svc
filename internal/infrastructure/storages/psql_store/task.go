@@ -9,6 +9,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/lib/pq"
 	"log"
+	"strings"
 
 	// DB driver
 	"github.com/jmoiron/sqlx"
@@ -226,27 +227,51 @@ func (s *TaskPsqlStorage) buildQueryFromTasksFilter(filter *models.TasksFilter, 
 
 	query = fmt.Sprintf("%s WHERE TRUE", query)
 
-	if len(filter.Statuses) > 0 {
-		query, args, err = sqlx.In(fmt.Sprintf("%s AND status IN (?)", query), filter.Statuses)
-		if err != nil {
-			return "", nil, err
+	if filter != nil {
+		if len(filter.Filtering.Statuses) > 0 {
+			query, args, err = sqlx.In(fmt.Sprintf("%s AND status IN (?)", query), filter.Filtering.Statuses)
+			if err != nil {
+				return "", nil, err
+			}
 		}
-	}
 
-	if filter.Currency != nil {
-		query = fmt.Sprintf("%s AND currency = ?", query)
+		if filter.Filtering.Currency != nil {
+			query = fmt.Sprintf("%s AND currency = ?", query)
+			args = append(args, filter.Filtering.Currency.String())
+		}
 
-		args = append(args, filter.Currency.String())
+		if filter.Filtering.IsActive != nil {
+			query = fmt.Sprintf("%s AND is_active = ?", query)
+			args = append(args, filter.Filtering.IsActive)
+		}
 	}
 
 	if isList {
 		// TODO: Add norm sorting and paging
 		var (
-			sortBy    = "id"
+			sortBy    = []string{"id"}
 			sortOrder = "ASC"
 		)
 
-		query = fmt.Sprintf("%s ORDER BY %s %s", query, sortBy, sortOrder)
+		if filter.Sorting.SortOrder != "" {
+			sortOrder = filter.Sorting.SortOrder
+		}
+
+		if len(filter.Sorting.SortBy) > 0 {
+			sortBy = filter.Sorting.SortBy
+		}
+
+		query = fmt.Sprintf("%s ORDER BY %s %s", query, strings.Join(sortBy, ","), sortOrder)
+
+		if filter.Limiting.Limit != 0 {
+			query = fmt.Sprintf("%s LIMIT ?", query)
+			args = append(args, filter.Limiting.Limit)
+		}
+
+		if filter.Limiting.Offset > 0 {
+			query = fmt.Sprintf("%s OFFSET ?", query)
+			args = append(args, filter.Limiting.Offset)
+		}
 	}
 
 	query = s.db.Rebind(query)

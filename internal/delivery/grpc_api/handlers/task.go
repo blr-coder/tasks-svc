@@ -1,8 +1,7 @@
-package grpc
+package handlers
 
 import (
 	"context"
-	"fmt"
 	taskpbv1 "github.com/blr-coder/task-proto/gen/go/task/v1"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
@@ -30,84 +29,19 @@ func NewTaskServiceServer(validator *protovalidate.Validator, taskService servic
 func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
 	log.Println("create in TaskServiceServer")
 
-	// TODO: Add s.validate(r *taskpbv1.CreateTaskRequest) func, for validation createRequest
-	if err := s.Validator.Validate(createRequest); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	customerID, err := uuid.Parse(createRequest.GetCustomerId())
+	task, err := s.validateCreateTaskAndConvertToDomain(createRequest)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var (
-		executorID     *uuid.UUID
-		domainCurrency *models.Currency
-		amount         *float64
-	)
-
-	if createRequest.GetExecutorId() != nil {
-		eID, err := uuid.Parse(createRequest.GetExecutorId().GetValue())
-		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		executorID = &eID
-	}
-
-	if createRequest.GetPrice() != nil {
-		currency, err := ProtoCurrencyToDomainCurrency(createRequest.GetPrice().GetCurrency())
-		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		amount = utils.Pointer(createRequest.GetPrice().GetAmount())
-		domainCurrency = utils.Pointer(currency)
-	}
-
-	/*newId, err := s.taskService.Create(ctx, &models.CreateTask{
-		Title:       createRequest.GetTitle(),
-		Description: createRequest.GetDescription(),
-		CustomerID:  customerID,
-		ExecutorID:  executorID,
-		Amount:      amount,
-		Currency:    domainCurrency,
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}*/
-
-	newId, err := s.taskService.CreateWithTransaction(ctx, &models.CreateTask{
-		Title:       createRequest.GetTitle(),
-		Description: createRequest.GetDescription(),
-		CustomerID:  customerID,
-		ExecutorID:  executorID,
-		Amount:      amount,
-		Currency:    domainCurrency,
-	})
+	newTaskId, err := s.taskService.CreateWithTransaction(ctx, task)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &taskpbv1.CreateTaskResponse{
-		NewTaskId: newId,
+		NewTaskId: newTaskId,
 	}, nil
-}
-
-func ProtoCurrencyToDomainCurrency(pbCurrency string) (currency models.Currency, err error) {
-	// TODO: Add ENUM to PROTO or another solution
-	switch pbCurrency {
-	case "EUR":
-		currency = models.CurrencyEUR
-	case "USD":
-		currency = models.CurrencyUSD
-	case "PLN":
-		currency = models.CurrencyPLN
-	default:
-		return "", fmt.Errorf("unknown currency_checker, %s", pbCurrency)
-	}
-
-	return currency, nil
 }
 
 func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
@@ -125,31 +59,11 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 }
 
 func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
-	// TODO: Add func for convert ListTasksRequest to models.TasksFilter
-	filter := &models.TasksFilter{}
-
-	if len(listRequest.GetFiltering().GetStatuses()) > 0 {
-		domainStatuses := make([]models.TaskStatus, 0, len(listRequest.GetFiltering().GetStatuses()))
-
-		for _, pbStatus := range listRequest.GetFiltering().GetStatuses() {
-			domainStatuses = append(domainStatuses, PbTaskStatusToDomain(pbStatus))
-		}
-
-		filter.Statuses = domainStatuses
-	}
-
-	switch listRequest.GetFiltering().GetCurrency().GetValue() {
-	case "EUR":
-		filter.Currency = utils.Pointer(models.CurrencyEUR)
-	case "USD":
-		filter.Currency = utils.Pointer(models.CurrencyUSD)
-	case "PLN":
-		filter.Currency = utils.Pointer(models.CurrencyPLN)
-	default:
-
-	}
-
-	domainTasks, err := s.taskService.List(ctx, filter)
+	domainTasks, err := s.taskService.List(ctx, &models.TasksFilter{
+		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
+		Sorting:   PbTasksSortingToDomain(listRequest.GetSorting()),
+		Limiting:  PbListLimitingToDB(listRequest.GetLimiting()),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +72,11 @@ func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1
 }
 
 func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpbv1.TotalTasksRequest) (*taskpbv1.TotalTasksResponse, error) {
-	total, err := s.taskService.Count(ctx, &models.TasksFilter{})
+	total, err := s.taskService.Count(ctx, &models.TasksFilter{
+		Filtering: PbListTasksFilteringToDomain(totalRequest.GetFiltering()),
+		Sorting:   PbTasksSortingToDomain(totalRequest.GetSorting()),
+		Limiting:  PbListLimitingToDB(totalRequest.GetLimiting()),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +91,13 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		customerID, executorID uuid.UUID
 		err                    error
 		updateTask             = &models.UpdateTask{
-			ID: updateRequest.GetTaskId(),
+			ID:          updateRequest.GetTaskId(),
+			Title:       updateRequest.Title,
+			Description: updateRequest.Description,
+			Status:      PbTaskStatusToDomain(updateRequest.GetStatus()),
+			Currency:    nil,
+			Amount:      nil,
+			IsActive:    updateRequest.IsActive,
 		}
 	)
 
@@ -181,8 +105,8 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		return nil, err
 	}
 
-	if updateRequest.GetCustomerId() != nil {
-		customerID, err = uuid.Parse(updateRequest.GetCustomerId().GetValue())
+	if updateRequest.CustomerId != nil {
+		customerID, err = uuid.Parse(updateRequest.GetCustomerId())
 		if err != nil {
 			return nil, err
 		}
@@ -190,8 +114,8 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.CustomerID = &customerID
 	}
 
-	if updateRequest.GetExecutorId() != nil {
-		executorID, err = uuid.Parse(updateRequest.GetExecutorId().GetValue())
+	if updateRequest.ExecutorId != nil {
+		executorID, err = uuid.Parse(updateRequest.GetExecutorId())
 		if err != nil {
 			return nil, err
 		}
@@ -199,30 +123,14 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 		updateTask.ExecutorID = utils.Pointer(executorID)
 	}
 
-	if updateRequest.GetTitle() != nil {
-		updateTask.Title = utils.Pointer(updateRequest.GetTitle().GetValue())
-	}
-
-	if updateRequest.GetDescription() != nil {
-		updateTask.Description = utils.Pointer(updateRequest.GetDescription().GetValue())
-	}
-
-	if updateRequest.GetStatus() != taskpbv1.TaskStatus_TASK_STATUS_UNSPECIFIED {
-		updateTask.Status = utils.Pointer(PbTaskStatusToDomain(updateRequest.GetStatus()))
-	}
-
 	if updateRequest.Price != nil {
-		currency, err := ProtoCurrencyToDomainCurrency(updateRequest.GetPrice().GetCurrency())
+		currency, err := PBCurrencyToDomainCurrency(updateRequest.GetPrice().GetCurrency())
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		updateTask.Currency = utils.Pointer(currency)
 		updateTask.Amount = utils.Pointer(updateRequest.GetPrice().GetAmount())
-	}
-
-	if updateRequest.IsActive != nil {
-		updateTask.IsActive = utils.Pointer(updateRequest.IsActive.Value)
 	}
 
 	task, err := s.taskService.Update(ctx, updateTask)
@@ -259,7 +167,7 @@ func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.Set
 
 	_, err := s.taskService.Update(ctx, &models.UpdateTask{
 		ID:     request.GetTaskId(),
-		Status: utils.Pointer(PbTaskStatusToDomain(request.GetStatus())),
+		Status: PbTaskStatusToDomain(request.GetStatus()),
 	})
 	if err != nil {
 		// TODO: Add check for domainError - IsUpdatePossible
@@ -281,4 +189,12 @@ func (s *TaskServiceServer) AssignRandomExecutor(ctx context.Context, request *t
 	}
 
 	return &taskpbv1.AssignRandomExecutorResponse{}, nil
+}
+
+func (s *TaskServiceServer) validateCreateTaskAndConvertToDomain(createRequest *taskpbv1.CreateTaskRequest) (*models.CreateTask, error) {
+	if err := s.Validator.Validate(createRequest); err != nil {
+		return nil, err
+	}
+
+	return PbCreateTaskToDomain(createRequest)
 }

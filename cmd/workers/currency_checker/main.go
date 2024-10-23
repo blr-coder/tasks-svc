@@ -25,9 +25,7 @@ func main() {
 func runCheckRates() error {
 	log.Println("RUN CURRENCY CHECKER!")
 
-	ctx := context.Background()
-
-	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	_, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
 	appConfig, err := config.NewAppConfig()

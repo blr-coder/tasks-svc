@@ -24,5 +24,7 @@ func runTestWorker() error {
 		return nil
 	})
 
+	// TODO: Add Graceful shutdown
+
 	return nil
 }
