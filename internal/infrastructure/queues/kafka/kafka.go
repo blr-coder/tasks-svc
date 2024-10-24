@@ -177,14 +177,6 @@ func domainTaskStatusToPB(domainStatus models.TaskStatus) (pbStatus taskschemasr
 }
 
 func domainTaskToPB(task *models.Task) *taskschemasregistry.TaskV1 {
-	/*var (
-		eID string
-	)*/
-
-	/*if task.ExecutorID != nil {
-		eID = task.ExecutorID.String()
-	}*/
-
 	return &taskschemasregistry.TaskV1{
 		Id:          task.ID,
 		Title:       task.Title,

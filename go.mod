@@ -9,6 +9,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.6.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0

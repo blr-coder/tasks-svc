@@ -27,11 +27,11 @@ type ITaskService interface {
 type TaskService struct {
 	taskStorage        psql_store.ITaskStorage
 	eventSender        events.IEventSender
-	transactionManager transaction.DBTransactionManager
+	transactionManager transaction.IDBTransactionManager
 	currencyStorage    psql_store.ICurrencyStorage
 }
 
-func NewTaskService(taskStorage psql_store.ITaskStorage, currencyStorage psql_store.ICurrencyStorage, eventSender events.IEventSender, transactionManager transaction.DBTransactionManager) *TaskService {
+func NewTaskService(taskStorage psql_store.ITaskStorage, currencyStorage psql_store.ICurrencyStorage, eventSender events.IEventSender, transactionManager transaction.IDBTransactionManager) *TaskService {
 	return &TaskService{
 		taskStorage:        taskStorage,
 		eventSender:        eventSender,
