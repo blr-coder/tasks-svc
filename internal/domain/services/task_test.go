@@ -28,6 +28,7 @@ func (tss *TaskServiceTestsSuite) SetupTest() {
 	tss.mockController = gomock.NewController(tss.T())
 	tss.mockITaskStorage = psql_store.NewMockITaskStorage(tss.mockController)
 	tss.mockICurrencyStorage = psql_store.NewMockICurrencyStorage(tss.mockController)
+	tss.mockIDBTransactionManager = transaction.NewMockIDBTransactionManager(tss.mockController)
 	tss.mockIEventSender = events.NewMockIEventSender(tss.mockController)
 	tss.taskService = NewTaskService(tss.mockITaskStorage, tss.mockICurrencyStorage, tss.mockIEventSender, tss.mockIDBTransactionManager)
 }

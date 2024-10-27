@@ -126,7 +126,6 @@ func (ts *TaskService) Create(ctx context.Context, input *models.CreateTask) (in
 func (ts *TaskService) Get(ctx context.Context, taskID int64) (*models.Task, error) {
 	task, err := ts.taskStorage.Get(ctx, taskID)
 	if err != nil {
-		// TODO: Check DomainNotFoundError ???
 		return nil, err
 	}
 
