@@ -32,3 +32,7 @@ const (
 	CUDTopic       EventTopic = "TASK_CUD_STREAMING_TOPIC"
 	LifecycleTopic EventTopic = "TASK_LIFECYCLE_STREAMING_TOPIC"
 )
+
+type IEventReceiver interface {
+	Receive(ctx context.Context) error
+}

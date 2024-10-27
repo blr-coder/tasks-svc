@@ -13,6 +13,7 @@ import (
 	"log"
 )
 
+// TODO: rename to TaskServiceHandler!!!!
 type TaskServiceServer struct {
 	taskpbv1.UnimplementedTaskServiceServer
 	Validator   *protovalidate.Validator
