@@ -15,9 +15,10 @@ type AppConfig struct {
 }
 
 type KafkaConfig struct {
-	Topic     string `yaml:"topic" env:"TOPIC" env-default:"async_arc_topic"`
-	Partition int    `yaml:"partition" env:"PARTITION" env-default:"0"`
-	Address   string `yaml:"address" env:"ADDRESS" env-default:"localhost:9092"`
+	Topic         string `yaml:"topic" env:"TOPIC" env-default:"async_arc_topic"`
+	ConsumerTopic string `yaml:"consumer_topic" env:"CONSUMER_TOPIC" env-default:"ACTIONS_TOPIC"`
+	Partition     int    `yaml:"partition" env:"PARTITION" env-default:"0"`
+	Address       string `yaml:"address" env:"ADDRESS" env-default:"localhost:9092"`
 }
 
 type AbstractAPIConfig struct {
