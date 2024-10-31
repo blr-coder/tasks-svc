@@ -127,10 +127,10 @@ func (mr *MockITaskStorageMockRecorder) Update(ctx, input interface{}) *gomock.C
 }
 
 // WithTransaction mocks base method.
-func (m *MockITaskStorage) WithTransaction(tx *sqlx.Tx) *TaskPsqlStorage {
+func (m *MockITaskStorage) WithTransaction(tx *sqlx.Tx) ITaskStorage {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WithTransaction", tx)
-	ret0, _ := ret[0].(*TaskPsqlStorage)
+	ret0, _ := ret[0].(ITaskStorage)
 	return ret0
 }
 

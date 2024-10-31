@@ -90,3 +90,40 @@ func (mr *MockIEventSenderMockRecorder) SendTaskUpdated(ctx, task interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTaskUpdated", reflect.TypeOf((*MockIEventSender)(nil).SendTaskUpdated), ctx, task)
 }
+
+// MockIEventReceiver is a mock of IEventReceiver interface.
+type MockIEventReceiver struct {
+	ctrl     *gomock.Controller
+	recorder *MockIEventReceiverMockRecorder
+}
+
+// MockIEventReceiverMockRecorder is the mock recorder for MockIEventReceiver.
+type MockIEventReceiverMockRecorder struct {
+	mock *MockIEventReceiver
+}
+
+// NewMockIEventReceiver creates a new mock instance.
+func NewMockIEventReceiver(ctrl *gomock.Controller) *MockIEventReceiver {
+	mock := &MockIEventReceiver{ctrl: ctrl}
+	mock.recorder = &MockIEventReceiverMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIEventReceiver) EXPECT() *MockIEventReceiverMockRecorder {
+	return m.recorder
+}
+
+// Receive mocks base method.
+func (m *MockIEventReceiver) Receive(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Receive", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Receive indicates an expected call of Receive.
+func (mr *MockIEventReceiverMockRecorder) Receive(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockIEventReceiver)(nil).Receive), ctx)
+}

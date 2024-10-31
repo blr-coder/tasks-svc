@@ -24,7 +24,7 @@ type ITaskStorage interface {
 	Update(ctx context.Context, input *models.Task) (*models.Task, error)
 	Delete(ctx context.Context, taskID int64) error
 
-	WithTransaction(tx *sqlx.Tx) *TaskPsqlStorage
+	WithTransaction(tx *sqlx.Tx) ITaskStorage
 }
 
 type IStorageExecutor interface {
@@ -49,7 +49,7 @@ func NewTaskPsqlStorage(database *sqlx.DB) *TaskPsqlStorage {
 	}
 }
 
-func (s *TaskPsqlStorage) WithTransaction(tx *sqlx.Tx) *TaskPsqlStorage {
+func (s *TaskPsqlStorage) WithTransaction(tx *sqlx.Tx) ITaskStorage {
 	return &TaskPsqlStorage{
 		db:       s.db,
 		executor: tx,
