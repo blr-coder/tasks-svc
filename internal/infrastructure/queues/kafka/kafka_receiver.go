@@ -28,6 +28,22 @@ func NewReceiver(config config.KafkaConfig) (*Receiver, error) {
 	return &Receiver{kafkaConsumer: partitionConsumer}, nil
 }
 
+func (r *Receiver) ReceiveWithAction(ctx context.Context, event any, actionFunc func(ctx context.Context) error) error {
+	for i := 0; ; i++ {
+		msg := <-r.kafkaConsumer.Messages()
+
+		err := json.Unmarshal(msg.Value, &event)
+		if err != nil {
+			return err
+		}
+
+		err = actionFunc(ctx)
+		if err != nil {
+			return err
+		}
+	}
+}
+
 func (r *Receiver) Receive(ctx context.Context) error {
 	var event TaskAction
 
