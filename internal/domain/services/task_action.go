@@ -12,7 +12,14 @@ type ITaskActionService interface {
 type TaskActionService struct {
 }
 
+func NewTaskActionService() *TaskActionService {
+
+	return &TaskActionService{}
+}
+
 func (as *TaskActionService) Save(ctx context.Context, action *models.TaskAction) error {
+
+	// TODO: Implement me:)
 
 	return nil
 }

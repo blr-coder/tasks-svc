@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"github.com/blr-coder/tasks-svc/internal/config"
+	"github.com/blr-coder/tasks-svc/internal/delivery/kafka/handlers"
+	"github.com/blr-coder/tasks-svc/internal/domain/services"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
 	"log"
 )
@@ -29,7 +31,16 @@ func runTaskActionConsumer() error {
 		return err
 	}
 
-	err = r.Receive(ctx)
+	// For test (test is OK)
+	/*err = r.Receive(ctx)
+	if err != nil {
+		return err
+	}*/
+
+	as := services.NewTaskActionService()
+	tah := handlers.NewTaskActionHandler(r, as)
+
+	err = tah.Handle(ctx)
 	if err != nil {
 		return err
 	}

@@ -9,8 +9,15 @@ import (
 )
 
 type TaskActionHandler struct {
-	receiver          kafka.Receiver
+	receiver          *kafka.Receiver
 	taskActionService services.ITaskActionService
+}
+
+func NewTaskActionHandler(actionReceiver *kafka.Receiver, actionService services.ITaskActionService) *TaskActionHandler {
+	return &TaskActionHandler{
+		receiver:          actionReceiver,
+		taskActionService: actionService,
+	}
 }
 
 func (h *TaskActionHandler) Handle(ctx context.Context) error {
