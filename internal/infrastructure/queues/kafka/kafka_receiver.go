@@ -53,6 +53,7 @@ func (r *Receiver) ReceiveWithAction(ctx context.Context, actionFunc func(ctx co
 	}
 }
 
+// Receive was created only for alpha testing
 func (r *Receiver) Receive(ctx context.Context) error {
 	var event models.TaskAction
 
