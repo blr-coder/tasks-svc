@@ -3,8 +3,10 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
+	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/davecgh/go-spew/spew"
 	"log"
 )
@@ -28,8 +30,32 @@ func NewReceiver(config config.KafkaConfig) (*Receiver, error) {
 	return &Receiver{kafkaConsumer: partitionConsumer}, nil
 }
 
+func (r *Receiver) ReceiveWithAction(ctx context.Context, actionFunc func(ctx context.Context, event any) error) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case msg, ok := <-r.kafkaConsumer.Messages():
+			if !ok {
+				return nil // Канал закрыт, завершаем без ошибки
+			}
+
+			var event any
+			if err := json.Unmarshal(msg.Value, &event); err != nil {
+				log.Println(fmt.Errorf("failed to unmarshal message: %w", err))
+				continue
+			}
+
+			if err := actionFunc(ctx, event); err != nil {
+				log.Println(fmt.Errorf("action function error: %w", err))
+			}
+		}
+	}
+}
+
+// Receive was created only for alpha testing
 func (r *Receiver) Receive(ctx context.Context) error {
-	var event TaskAction
+	var event models.TaskAction
 
 	i := 0
 	for ; ; i++ {
@@ -50,20 +76,3 @@ func (r *Receiver) Receive(ctx context.Context) error {
 
 	return nil
 }
-
-// TODO: Remove it after testing
-
-type TaskAction struct {
-	ID     int64
-	TaskID int64
-	Type   ActionType
-	URL    string
-}
-
-type ActionType string
-
-const (
-	commit       ActionType = "COMMIT"
-	mergeRequest ActionType = "MERGE_REQUEST"
-	merge        ActionType = "MERGE"
-)
