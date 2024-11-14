@@ -7,6 +7,7 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/delivery/grpc_api/interceptors"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 )
 
@@ -15,7 +16,7 @@ type Server struct {
 }
 
 func NewGRPCServer(
-	taskServer *handlers.TaskServiceServer,
+	taskHandler *handlers.TaskGRPCHandler,
 	// someServer1 *SomeServiceServer1,
 	// someServer2 *SomeServiceServer2,
 ) *Server {
@@ -24,8 +25,11 @@ func NewGRPCServer(
 		interceptors.SimpleLoggingInterceptor,
 	))
 
+	// Даёт возможность клиенту обратиться к серверу за списком доступных методов
+	reflection.Register(grpcServer)
+
 	// register grpcServerServices
-	taskpbv1.RegisterTaskServiceServer(grpcServer, taskServer)
+	taskpbv1.RegisterTaskServiceServer(grpcServer, taskHandler)
 	// register other services... for example:
 	//taskpbv1.RegisterSomeServiceServer1(grpcServer, someServer1)
 	//taskpbv1.RegisterSomeServiceServer2(grpcServer, someServer2)

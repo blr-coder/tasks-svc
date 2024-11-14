@@ -26,6 +26,7 @@ func (h *TaskActionHandler) Handle(ctx context.Context) error {
 		// map[string]interface{}
 
 		var taskActionDTO TaskActionDTO
+		// TODO: Think about json.Marshal and json.Unmarshal. It's difficult. Maybe using "https://github.com/mitchellh/mapstructure" will be better, or something else.
 		data, err := json.Marshal(event) // Кодируем в JSON
 		if err != nil {
 			return fmt.Errorf("failed to marshal event to JSON: %w", err)

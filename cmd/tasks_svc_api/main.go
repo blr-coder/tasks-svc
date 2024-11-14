@@ -58,9 +58,9 @@ func runApp() error {
 	txManager := transaction.NewTransactionManager(db)
 
 	taskService := services.NewTaskService(taskPsqlStorage, currencyPsqlStorage, sender, txManager)
-	taskGRPCServer := handlers.NewTaskServiceServer(validator, taskService)
+	taskGRPCHandler := handlers.NewTaskGRPCHandler(validator, taskService)
 
-	grpcServer := grpc.NewGRPCServer(taskGRPCServer)
+	grpcServer := grpc.NewGRPCServer(taskGRPCHandler)
 
 	go func() {
 		err = grpcServer.Run(appConfig.AppPort)

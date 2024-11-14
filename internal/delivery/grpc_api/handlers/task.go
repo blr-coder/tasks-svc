@@ -13,21 +13,20 @@ import (
 	"log"
 )
 
-// TODO: rename to TaskServiceHandler!!!!
-type TaskServiceServer struct {
+type TaskGRPCHandler struct {
 	taskpbv1.UnimplementedTaskServiceServer
 	Validator   *protovalidate.Validator
 	taskService services.ITaskService
 }
 
-func NewTaskServiceServer(validator *protovalidate.Validator, taskService services.ITaskService) *TaskServiceServer {
-	return &TaskServiceServer{
+func NewTaskGRPCHandler(validator *protovalidate.Validator, taskService services.ITaskService) *TaskGRPCHandler {
+	return &TaskGRPCHandler{
 		Validator:   validator,
 		taskService: taskService,
 	}
 }
 
-func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
+func (s *TaskGRPCHandler) CreateTask(ctx context.Context, createRequest *taskpbv1.CreateTaskRequest) (*taskpbv1.CreateTaskResponse, error) {
 	log.Println("create in TaskServiceServer")
 
 	task, err := s.validateCreateTaskAndConvertToDomain(createRequest)
@@ -45,7 +44,7 @@ func (s *TaskServiceServer) CreateTask(ctx context.Context, createRequest *taskp
 	}, nil
 }
 
-func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
+func (s *TaskGRPCHandler) GetTask(ctx context.Context, getRequest *taskpbv1.GetTaskRequest) (*taskpbv1.GetTaskResponse, error) {
 	log.Println("get")
 
 	task, err := s.taskService.Get(ctx, getRequest.GetTaskId())
@@ -59,7 +58,7 @@ func (s *TaskServiceServer) GetTask(ctx context.Context, getRequest *taskpbv1.Ge
 	return &taskpbv1.GetTaskResponse{Task: domainTaskToPBTask(task)}, nil
 }
 
-func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
+func (s *TaskGRPCHandler) ListTasks(ctx context.Context, listRequest *taskpbv1.ListTasksRequest) (*taskpbv1.ListTasksResponse, error) {
 	domainTasks, err := s.taskService.List(ctx, &models.TasksFilter{
 		Filtering: PbListTasksFilteringToDomain(listRequest.GetFiltering()),
 		Sorting:   PbTasksSortingToDomain(listRequest.GetSorting()),
@@ -72,7 +71,7 @@ func (s *TaskServiceServer) ListTasks(ctx context.Context, listRequest *taskpbv1
 	return &taskpbv1.ListTasksResponse{Tasks: domainTasksToPBTasks(domainTasks)}, nil
 }
 
-func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpbv1.TotalTasksRequest) (*taskpbv1.TotalTasksResponse, error) {
+func (s *TaskGRPCHandler) TotalTasks(ctx context.Context, totalRequest *taskpbv1.TotalTasksRequest) (*taskpbv1.TotalTasksResponse, error) {
 	total, err := s.taskService.Count(ctx, &models.TasksFilter{
 		Filtering: PbListTasksFilteringToDomain(totalRequest.GetFiltering()),
 		Sorting:   PbTasksSortingToDomain(totalRequest.GetSorting()),
@@ -85,7 +84,7 @@ func (s *TaskServiceServer) TotalTasks(ctx context.Context, totalRequest *taskpb
 	return &taskpbv1.TotalTasksResponse{Total: total}, nil
 }
 
-func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
+func (s *TaskGRPCHandler) UpdateTask(ctx context.Context, updateRequest *taskpbv1.UpdateTaskRequest) (*taskpbv1.UpdateTaskResponse, error) {
 	log.Println("update")
 
 	var (
@@ -144,7 +143,7 @@ func (s *TaskServiceServer) UpdateTask(ctx context.Context, updateRequest *taskp
 	}, nil
 }
 
-func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskpbv1.DeleteTaskRequest) (*taskpbv1.DeleteTaskResponse, error) {
+func (s *TaskGRPCHandler) DeleteTask(ctx context.Context, deleteRequest *taskpbv1.DeleteTaskRequest) (*taskpbv1.DeleteTaskResponse, error) {
 	log.Println("delete")
 
 	if err := s.taskService.Delete(ctx, deleteRequest.GetTaskId()); err != nil {
@@ -154,12 +153,12 @@ func (s *TaskServiceServer) DeleteTask(ctx context.Context, deleteRequest *taskp
 	return &taskpbv1.DeleteTaskResponse{}, nil
 }
 
-func (s *TaskServiceServer) AssignExecutor(ctx context.Context, request *taskpbv1.AssignExecutorRequest) (*taskpbv1.AssignExecutorResponse, error) {
+func (s *TaskGRPCHandler) AssignExecutor(ctx context.Context, request *taskpbv1.AssignExecutorRequest) (*taskpbv1.AssignExecutorResponse, error) {
 
 	return &taskpbv1.AssignExecutorResponse{}, nil
 }
 
-func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.SetStatusRequest) (*taskpbv1.SetStatusResponse, error) {
+func (s *TaskGRPCHandler) SetStatus(ctx context.Context, request *taskpbv1.SetStatusRequest) (*taskpbv1.SetStatusResponse, error) {
 	log.Println("SetStatus")
 
 	if err := s.Validator.Validate(request); err != nil {
@@ -178,7 +177,7 @@ func (s *TaskServiceServer) SetStatus(ctx context.Context, request *taskpbv1.Set
 	return &taskpbv1.SetStatusResponse{}, nil
 }
 
-func (s *TaskServiceServer) AssignRandomExecutor(ctx context.Context, request *taskpbv1.AssignRandomExecutorRequest) (*taskpbv1.AssignRandomExecutorResponse, error) {
+func (s *TaskGRPCHandler) AssignRandomExecutor(ctx context.Context, request *taskpbv1.AssignRandomExecutorRequest) (*taskpbv1.AssignRandomExecutorResponse, error) {
 	log.Println("AssignRandomExecutor")
 
 	if err := s.Validator.Validate(request); err != nil {
@@ -192,7 +191,7 @@ func (s *TaskServiceServer) AssignRandomExecutor(ctx context.Context, request *t
 	return &taskpbv1.AssignRandomExecutorResponse{}, nil
 }
 
-func (s *TaskServiceServer) validateCreateTaskAndConvertToDomain(createRequest *taskpbv1.CreateTaskRequest) (*models.CreateTask, error) {
+func (s *TaskGRPCHandler) validateCreateTaskAndConvertToDomain(createRequest *taskpbv1.CreateTaskRequest) (*models.CreateTask, error) {
 	if err := s.Validator.Validate(createRequest); err != nil {
 		return nil, err
 	}
