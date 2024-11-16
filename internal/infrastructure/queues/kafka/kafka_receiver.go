@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
@@ -21,7 +20,7 @@ func NewReceiver(config config.KafkaConfig) (*Receiver, error) {
 		return nil, err
 	}
 
-	partitionConsumer, err := consumer.ConsumePartition(config.ConsumerTopic, int32(config.Partition), sarama.OffsetOldest)
+	partitionConsumer, err := consumer.ConsumePartition(config.ConsumerTopic, int32(config.Partition), sarama.OffsetNewest)
 	if err != nil {
 		_ = consumer.Close() // Закрываем consumer в случае ошибки
 		return nil, err
@@ -31,23 +30,30 @@ func NewReceiver(config config.KafkaConfig) (*Receiver, error) {
 }
 
 func (r *Receiver) ReceiveWithAction(ctx context.Context, actionFunc func(ctx context.Context, event any) error) error {
+	defer func() {
+		if err := r.kafkaConsumer.Close(); err != nil {
+			log.Printf("error closing receiver: %v", err)
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case msg, ok := <-r.kafkaConsumer.Messages():
 			if !ok {
-				return nil // Канал закрыт, завершаем без ошибки
+				log.Println("Kafka message channel closed")
+				return nil
 			}
 
 			var event any
 			if err := json.Unmarshal(msg.Value, &event); err != nil {
-				log.Println(fmt.Errorf("failed to unmarshal message: %w", err))
+				log.Printf("failed to unmarshal message (offset %d): %v", msg.Offset, err)
 				continue
 			}
 
 			if err := actionFunc(ctx, event); err != nil {
-				log.Println(fmt.Errorf("action function error: %w", err))
+				log.Printf("action function error for message (offset %d): %v", msg.Offset, err)
 			}
 		}
 	}

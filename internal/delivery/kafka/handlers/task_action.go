@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
 	"github.com/blr-coder/tasks-svc/internal/domain/services"
+	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/queues/kafka"
 )
 
 type TaskActionHandler struct {
-	receiver          *kafka.Receiver
+	receiver          events.IEventReceiver
 	taskActionService services.ITaskActionService
 }
 
@@ -23,8 +24,9 @@ func NewTaskActionHandler(actionReceiver *kafka.Receiver, actionService services
 
 func (h *TaskActionHandler) Handle(ctx context.Context) error {
 	actionFunc := func(ctx context.Context, event any) error {
-		// map[string]interface{}
+		// event is map[string]interface{}
 
+		// TODO: Add TaskAction to schema registry
 		var taskActionDTO TaskActionDTO
 		// TODO: Think about json.Marshal and json.Unmarshal. It's difficult. Maybe using "https://github.com/mitchellh/mapstructure" will be better, or something else.
 		data, err := json.Marshal(event) // Кодируем в JSON

@@ -35,6 +35,7 @@ func runTaskActionConsumer() error {
 	}
 
 	r, err := kafka.NewReceiver(appConfig.KafkaConfig)
+	//r, err := kafka.NewGroupReceiver(appConfig.KafkaConfig)
 	if err != nil {
 		return err
 	}

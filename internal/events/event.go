@@ -34,5 +34,5 @@ const (
 )
 
 type IEventReceiver interface {
-	Receive(ctx context.Context) error
+	ReceiveWithAction(ctx context.Context, actionFunc func(ctx context.Context, event any) error) error
 }
