@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	"github.com/blr-coder/tasks-svc/internal/events"
@@ -15,6 +14,7 @@ const groupID = "task-consumer-group"
 type GroupReceiver struct {
 	kafkaGroupConsumer   sarama.ConsumerGroup
 	consumerGroupHandler ConsumerGroupHandler
+	topic                string
 }
 
 type ConsumerGroupHandler struct {
@@ -30,7 +30,7 @@ func (handler ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSes
 
 	for msg := range claim.Messages() {
 
-		fmt.Println("[Message Recieved] ", " timeStamp:", msg.Timestamp.Format("2006-01-02 15:04:05"), "consumerId:", " - topic:", msg.Topic, " - key:", string(msg.Key), " - msgValue:", string(msg.Value), " - partition:", msg.Partition, " - offset:", msg.Offset)
+		//fmt.Println("[Message Recieved] ", " timeStamp:", msg.Timestamp.Format("2006-01-02 15:04:05"), "consumerId:", " - topic:", msg.Topic, " - key:", string(msg.Key), " - msgValue:", string(msg.Value), " - partition:", msg.Partition, " - offset:", msg.Offset)
 
 		var event any
 		if err := json.Unmarshal(msg.Value, &event); err != nil {
@@ -50,7 +50,7 @@ func (handler ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSes
 func NewGroupReceiver(config config.KafkaConfig) (*GroupReceiver, error) {
 	saramaConfig := sarama.NewConfig()
 
-	saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+	//saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	groupConsumer, err := sarama.NewConsumerGroup([]string{config.Address}, groupID, saramaConfig)
 	if err != nil {
@@ -58,7 +58,11 @@ func NewGroupReceiver(config config.KafkaConfig) (*GroupReceiver, error) {
 		return nil, err
 	}
 
-	return &GroupReceiver{kafkaGroupConsumer: groupConsumer}, nil
+	return &GroupReceiver{
+		kafkaGroupConsumer:   groupConsumer,
+		consumerGroupHandler: ConsumerGroupHandler{},
+		topic:                config.ConsumerTopic,
+	}, nil
 }
 
 func (gr *GroupReceiver) ReceiveWithAction(ctx context.Context, actionFunc func(ctx context.Context, event any) error) error {
@@ -72,7 +76,7 @@ func (gr *GroupReceiver) ReceiveWithAction(ctx context.Context, actionFunc func(
 	handler := ConsumerGroupHandler{}
 
 	for {
-		err := gr.kafkaGroupConsumer.Consume(ctx, []string{"topic"}, handler)
+		err := gr.kafkaGroupConsumer.Consume(ctx, []string{gr.topic}, handler)
 		if err != nil {
 			log.Printf("Error consuming messages: %v", err)
 		}
@@ -91,7 +95,7 @@ func (gr *GroupReceiver) ReceiveWithRunner(ctx context.Context, runner events.IP
 	}
 
 	for {
-		err := gr.kafkaGroupConsumer.Consume(ctx, []string{"topic"}, handler)
+		err := gr.kafkaGroupConsumer.Consume(ctx, []string{gr.topic}, handler)
 		if err != nil {
 			log.Printf("Error consuming messages: %v", err)
 		}

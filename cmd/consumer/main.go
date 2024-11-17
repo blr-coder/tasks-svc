@@ -34,8 +34,8 @@ func runTaskActionConsumer() error {
 		return fmt.Errorf("connecting postgres: %w", err)
 	}
 
-	r, err := kafka.NewReceiver(appConfig.KafkaConfig)
-	//r, err := kafka.NewGroupReceiver(appConfig.KafkaConfig)
+	//r, err := kafka.NewReceiver(appConfig.KafkaConfig)
+	r, err := kafka.NewGroupReceiver(appConfig.KafkaConfig)
 	if err != nil {
 		return err
 	}
