@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/blr-coder/tasks-svc/internal/config"
 	"github.com/blr-coder/tasks-svc/internal/domain/models"
+	"github.com/blr-coder/tasks-svc/internal/events"
 	"github.com/davecgh/go-spew/spew"
 	"log"
 )
@@ -81,4 +82,34 @@ func (r *Receiver) Receive(ctx context.Context) error {
 	log.Printf("Finished. Received %d messages.\n", i)
 
 	return nil
+}
+
+func (r *Receiver) ReceiveWithRunner(ctx context.Context, runner events.IProcessRunner) error {
+	defer func() {
+		if err := r.kafkaConsumer.Close(); err != nil {
+			log.Printf("error closing receiver: %v", err)
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case msg, ok := <-r.kafkaConsumer.Messages():
+			if !ok {
+				log.Println("Kafka message channel closed")
+				return nil
+			}
+
+			var event any
+			if err := json.Unmarshal(msg.Value, &event); err != nil {
+				log.Printf("failed to unmarshal message (offset %d): %v", msg.Offset, err)
+				continue
+			}
+
+			if err := runner.Run(ctx, event); err != nil {
+				log.Printf("action function error for message (offset %d): %v", msg.Offset, err)
+			}
+		}
+	}
 }

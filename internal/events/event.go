@@ -33,6 +33,11 @@ const (
 	LifecycleTopic EventTopic = "TASK_LIFECYCLE_STREAMING_TOPIC"
 )
 
+type IProcessRunner interface {
+	Run(ctx context.Context, event any) error
+}
+
 type IEventReceiver interface {
 	ReceiveWithAction(ctx context.Context, actionFunc func(ctx context.Context, event any) error) error
+	ReceiveWithRunner(ctx context.Context, runner IProcessRunner) error
 }
