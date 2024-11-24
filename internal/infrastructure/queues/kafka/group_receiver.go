@@ -94,10 +94,24 @@ func (gr *GroupReceiver) ReceiveWithRunner(ctx context.Context, runner events.IP
 		runner: runner,
 	}
 
+	log.Println("Starting message consumption")
 	for {
-		err := gr.kafkaGroupConsumer.Consume(ctx, []string{gr.topic}, handler)
-		if err != nil {
-			log.Printf("Error consuming messages: %v", err)
+		select {
+		case <-ctx.Done(): // Если контекст завершен, выходим из цикла
+			log.Println("Context canceled, stopping message consumption")
+			return ctx.Err() // Возвращаем ошибку контекста (например, context.Canceled)
+
+		default:
+			// Пытаемся потреблять сообщения
+			err := gr.kafkaGroupConsumer.Consume(ctx, []string{gr.topic}, handler)
+			if err != nil {
+				if ctx.Err() != nil {
+					// Ошибка вызвана завершением контекста
+					return ctx.Err()
+				}
+				// Логируем остальные ошибки и продолжаем
+				log.Printf("Error consuming messages: %v", err)
+			}
 		}
 	}
 }

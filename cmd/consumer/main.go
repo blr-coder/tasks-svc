@@ -10,32 +10,38 @@ import (
 	"github.com/blr-coder/tasks-svc/internal/infrastructure/storages/psql_store"
 	"github.com/jmoiron/sqlx"
 	"log"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	err := runTaskActionConsumer()
+	err := startTaskActionConsumer()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func runTaskActionConsumer() error {
-	log.Println("RUN TASK ACTION CONSUMER")
+func startTaskActionConsumer() error {
+	log.Println("Starting Task Action Consumer")
 
 	ctx := context.Background()
 
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
+
 	appConfig, err := config.NewAppConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load app config: %w", err)
 	}
 
 	db, err := sqlx.Open("postgres", appConfig.PostgresConnLink)
 	if err != nil {
-		return fmt.Errorf("connecting postgres: %w", err)
+		return fmt.Errorf("failed to connect to PostgreSQL: %w", err)
 	}
+	defer db.Close()
 
-	//r, err := kafka.NewReceiver(appConfig.KafkaConfig)
-	r, err := kafka.NewGroupReceiver(appConfig.KafkaConfig)
+	//kafkaReceiver, err := kafka.NewReceiver(appConfig.KafkaConfig)
+	kafkaReceiver, err := kafka.NewGroupReceiver(appConfig.KafkaConfig)
 	if err != nil {
 		return err
 	}
@@ -46,15 +52,14 @@ func runTaskActionConsumer() error {
 		return err
 	}*/
 
-	ar := psql_store.NewTaskActionPsqlStorage(db)
+	taskActionStorage := psql_store.NewTaskActionPsqlStorage(db)
+	taskActionService := services.NewTaskActionService(taskActionStorage)
+	taskActionHandler := handlers.NewTaskActionHandler(kafkaReceiver, taskActionService)
 
-	as := services.NewTaskActionService(ar)
-	tah := handlers.NewTaskActionHandler(r, as)
-
-	err = tah.Handle(ctx)
-	if err != nil {
-		return err
+	if err = taskActionHandler.Handle(ctx); err != nil {
+		return fmt.Errorf("failed to handle Kafka messages: %w", err)
 	}
 
+	log.Println("Task Action Consumer stopped gracefully")
 	return nil
 }
